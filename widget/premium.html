@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPTCompress - Compressed Context</title>
+    <link rel="stylesheet" href="premium.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header Badge -->
+        <div class="header-badge">
+            <span class="icon">📦</span>
+            <span class="label">Compressed Context</span>
+            <span class="stats" id="compression-stats">26 → 6 messages</span>
+        </div>
+
+        <!-- Hero Summary -->
+        <div class="hero-card">
+            <h1 class="summary" id="summary">Loading compressed context...</h1>
+        </div>
+
+        <!-- Structured Data -->
+        <div class="sections-container">
+            <!-- Goals Section -->
+            <div class="section" id="goals-section">
+                <h2 class="section-header">
+                    <span class="icon">🎯</span>
+                    Goals
+                </h2>
+                <ul class="list" id="goals-list"></ul>
+            </div>
+
+            <!-- Decisions Section -->
+            <div class="section" id="decisions-section">
+                <h2 class="section-header">
+                    <span class="icon">⚙️</span>
+                    Key Decisions
+                </h2>
+                <ul class="list" id="decisions-list"></ul>
+            </div>
+
+            <!-- Constraints Section -->
+            <div class="section" id="constraints-section">
+                <h2 class="section-header">
+                    <span class="icon">⚠️</span>
+                    Constraints
+                </h2>
+                <ul class="list" id="constraints-list"></ul>
+            </div>
+
+            <!-- Open Questions Section -->
+            <div class="section" id="questions-section">
+                <h2 class="section-header">
+                    <span class="icon">❓</span>
+                    Open Questions
+                </h2>
+                <ul class="list" id="questions-list"></ul>
+            </div>
+
+            <!-- Key Facts Section -->
+            <div class="section" id="facts-section">
+                <h2 class="section-header">
+                    <span class="icon">📌</span>
+                    Key Facts
+                </h2>
+                <ul class="list" id="facts-list"></ul>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions">
+            <button class="btn btn-secondary" id="copy-btn">
+                <span class="icon">📋</span>
+                Copy All
+            </button>
+            <button class="btn btn-primary" id="new-chat-btn">
+                <span class="icon">💬</span>
+                Start New Chat
+                <span class="arrow">→</span>
+            </button>
+        </div>
+
+        <!-- Toast Notification -->
+        <div class="toast" id="toast">
+            <span id="toast-message">✓ Copied to clipboard</span>
+        </div>
+    </div>
+
+    <script src="premium.js"></script>
+</body>
+</html>

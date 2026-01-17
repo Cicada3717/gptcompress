@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Context Compressed</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 12L9 17L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h1>Context Compressed</h1>
+            </div>
+            <button id="copy-all-btn" class="secondary-btn">Copy All</button>
+        </header>
+
+        <section class="summary-section">
+            <p id="summary-text">Loading summary...</p>
+        </section>
+
+        <div class="grid-layout">
+            <div class="card">
+                <h2>Goals</h2>
+                <ul id="goals-list" class="checklist"></ul>
+            </div>
+            
+            <div class="card">
+                <h2>Constraints</h2>
+                <ul id="constraints-list" class="checklist warning"></ul>
+            </div>
+
+            <div class="card">
+                <h2>Decisions</h2>
+                <ul id="decisions-list" class="checklist success"></ul>
+            </div>
+
+            <div class="card">
+                <h2>Open Questions</h2>
+                <ul id="questions-list" class="checklist question"></ul>
+            </div>
+        </div>
+
+        <section class="facts-section">
+            <h2>Key Facts</h2>
+            <div id="facts-tags" class="tags-container"></div>
+        </section>
+    </div>
+
+    <script>
+        // Mock data injection for local testing if window.openai is undefined
+        const mockData = {
+            goal: ["Build offline-first todo app"],
+            constraints: ["Must work without internet"],
+            decisions: ["Using React with hooks"],
+            open_questions: ["How to handle sync conflicts?"],
+            key_facts: ["User has 2-week deadline"],
+            summary: "Building offline-first React todo app."
+        };
+
+        function renderData(data) {
+            document.getElementById('summary-text').textContent = data.summary;
+            
+            const renderList = (id, items) => {
+                const list = document.getElementById(id);
+                list.innerHTML = items?.map(item => `<li>${item}</li>`).join('') || '';
+            };
+
+            renderList('goals-list', data.goal);
+            renderList('constraints-list', data.constraints);
+            renderList('decisions-list', data.decisions);
+            renderList('questions-list', data.open_questions);
+
+            const factsContainer = document.getElementById('facts-tags');
+            factsContainer.innerHTML = data.key_facts?.map(fact => `<span class="tag">${fact}</span>`).join('') || '';
+        }
+
+        // Main entry point
+        window.addEventListener('load', () => {
+            // Check for OpenAI injected data
+            // Note: The specific injection mechanism for data needs to be confirmed with exact SDK usage.
+            // Often it's passed via window.openai.toolOutput or similar if we control the widget.
+            // Based on user context: window.openai.toolOutput
+            
+            let data = mockData; // Default fallback
+            
+            if (window.openai && window.openai.toolOutput) {
+                 // In production, we expect data here
+                 data = window.openai.toolOutput;
+            }
+
+            renderData(data);
+
+            // Copy functionality
+            document.getElementById('copy-all-btn').addEventListener('click', () => {
+                const text = JSON.stringify(data, null, 2);
+                navigator.clipboard.writeText(text).then(() => {
+                    const btn = document.getElementById('copy-all-btn');
+                    const originalText = btn.textContent;
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => btn.textContent = originalText, 2000);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
