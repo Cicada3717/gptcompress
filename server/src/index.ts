@@ -5,6 +5,8 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import {
     CallToolRequestSchema,
     ListToolsRequestSchema,
+    ListResourcesRequestSchema,
+    ReadResourceRequestSchema,
     CallToolRequest,
     Tool
 } from '@modelcontextprotocol/sdk/types.js';
@@ -80,6 +82,35 @@ function createMcpServer(): Server {
         tools: TOOLS,
     }));
 
+    // List available resources (widget UI)
+    server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+        resources: [
+            {
+                uri: 'ui://widget',
+                name: 'GPTCompress Widget',
+                description: 'Interactive widget for displaying compressed conversation context',
+                mimeType: 'text/html+skybridge'
+            }
+        ]
+    }));
+
+    // Serve widget HTML with skybridge MIME type
+    server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+        if (request.params.uri === 'ui://widget') {
+            const widgetPath = join(__dirname, '..', '..', 'widget', 'premium.html');
+            const htmlContent = readFileSync(widgetPath, 'utf-8');
+
+            return {
+                contents: [{
+                    uri: 'ui://widget',
+                    mimeType: 'text/html+skybridge',
+                    text: htmlContent
+                }]
+            };
+        }
+        throw new Error(`Unknown resource: ${request.params.uri}`);
+    });
+
     server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest) => {
         if (request.params.name !== 'compress_conversation') {
             throw new Error(`Unknown tool: ${request.params.name}`);
@@ -115,7 +146,7 @@ function createMcpServer(): Server {
             }],
             structuredContent: compressionResult.data,
             _meta: {
-                'openai/outputTemplate': `${publicUrl}/widget`,
+                'openai/outputTemplate': 'ui://widget',
             }
         };
     });
