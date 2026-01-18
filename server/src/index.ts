@@ -17,8 +17,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+// Default to 8080 if PORT not set (Railway sets it usually)
 const port = Number(process.env.PORT) || 8080;
-const host = process.env.HOST || '0.0.0.0';
 const publicUrl = process.env.PUBLIC_URL || `http://localhost:${port}`;
 
 // Define tools
@@ -200,6 +200,8 @@ async function handlePostMessage(
 // HTTP Server
 const httpServer = createServer(
     async (req: IncomingMessage, res: ServerResponse) => {
+        console.log(`[REQUEST] ${req.method} ${req.url}`);
+
         const url = new URL(req.url!, `http://${req.headers.host ?? 'localhost'}`);
 
         // CORS preflight
@@ -228,6 +230,7 @@ const httpServer = createServer(
                 res.writeHead(200, { 'Content-Type': 'text/html' });
                 res.end(html);
             } catch (error) {
+                console.error(`Widget not found at path: ${join(__dirname, '..', '..', 'widget', 'premium.html')}`);
                 res.writeHead(404).end('Widget not found');
             }
             return;
@@ -281,12 +284,11 @@ httpServer.on('clientError', (err: Error, socket) => {
     socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
 });
 
-httpServer.listen(port, host, () => {
-    console.log(`GPTCompress MCP Server running on ${host}:${port}`);
+httpServer.listen(port, () => {
+    console.log(`GPTCompress MCP Server running on port ${port}`);
     console.log(`  ---------------------------------------------------`);
     console.log(`  Public URL Configured: ${publicUrl}`);
     console.log(`  Port: ${port}`);
-    console.log(`  Host: ${host}`);
     console.log(`  OPENAI_API_KEY set: ${!!process.env.OPENAI_API_KEY}`);
     console.log(`  ---------------------------------------------------`);
     console.log(`  Widget Template URL:   ${publicUrl}/widget`);
