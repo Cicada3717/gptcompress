@@ -285,6 +285,10 @@ httpServer.listen(port, host, () => {
     console.log(`GPTCompress MCP Server running on ${host}:${port}`);
     console.log(`  ---------------------------------------------------`);
     console.log(`  Public URL Configured: ${publicUrl}`);
+    console.log(`  Port: ${port}`);
+    console.log(`  Host: ${host}`);
+    console.log(`  OPENAI_API_KEY set: ${!!process.env.OPENAI_API_KEY}`);
+    console.log(`  ---------------------------------------------------`);
     console.log(`  Widget Template URL:   ${publicUrl}/widget`);
     console.log(`  ---------------------------------------------------`);
     console.log(`  SSE endpoint: GET ${publicUrl}${ssePath}`);
