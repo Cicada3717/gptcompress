@@ -17,7 +17,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const port = Number(process.env.PORT) || 3000;
+const port = Number(process.env.PORT) || 8080;
+const host = process.env.HOST || '0.0.0.0';
 const publicUrl = process.env.PUBLIC_URL || `http://localhost:${port}`;
 
 // Define tools
@@ -273,13 +274,13 @@ httpServer.on('clientError', (err: Error, socket) => {
     socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
 });
 
-httpServer.listen(port, () => {
-    console.log(`GPTCompress MCP Server running on port ${port}`);
+httpServer.listen(port, host, () => {
+    console.log(`GPTCompress MCP Server running on ${host}:${port}`);
     console.log(`  ---------------------------------------------------`);
     console.log(`  Public URL Configured: ${publicUrl}`);
     console.log(`  Widget Template URL:   ${publicUrl}/widget`);
     console.log(`  ---------------------------------------------------`);
-    console.log(`  SSE endpoint: GET http://localhost:${port}${ssePath}`);
-    console.log(`  POST endpoint: POST http://localhost:${port}${postPath}?sessionId=...`);
-    console.log(`  Local Widget: GET http://localhost:${port}/widget`);
+    console.log(`  SSE endpoint: GET ${publicUrl}${ssePath}`);
+    console.log(`  POST endpoint: POST ${publicUrl}${postPath}?sessionId=...`);
+    console.log(`  Widget: GET ${publicUrl}/widget`);
 });
