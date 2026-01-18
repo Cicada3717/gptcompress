@@ -17,8 +17,9 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-// Default to 8080 if PORT not set (Railway sets it usually)
-const port = Number(process.env.PORT) || 8080;
+// Use PORT env var or default to 3000
+const port = Number(process.env.PORT) || 3000;
+const host = '0.0.0.0'; // Explicitly bind to Docker interface
 const publicUrl = process.env.PUBLIC_URL || `http://localhost:${port}`;
 
 // Define tools
@@ -284,11 +285,12 @@ httpServer.on('clientError', (err: Error, socket) => {
     socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
 });
 
-httpServer.listen(port, () => {
-    console.log(`GPTCompress MCP Server running on port ${port}`);
+httpServer.listen(port, host, () => {
+    console.log(`GPTCompress MCP Server running on ${host}:${port}`);
     console.log(`  ---------------------------------------------------`);
     console.log(`  Public URL Configured: ${publicUrl}`);
     console.log(`  Port: ${port}`);
+    console.log(`  Host: ${host}`);
     console.log(`  OPENAI_API_KEY set: ${!!process.env.OPENAI_API_KEY}`);
     console.log(`  ---------------------------------------------------`);
     console.log(`  Widget Template URL:   ${publicUrl}/widget`);
