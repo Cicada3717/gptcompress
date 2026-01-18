@@ -213,6 +213,13 @@ const httpServer = createServer(
             return;
         }
 
+        // Health check endpoint
+        if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ status: 'ok', service: 'gptcompress', version: '0.1.0' }));
+            return;
+        }
+
         // Widget endpoint
         if (req.method === 'GET' && url.pathname === '/widget') {
             try {
