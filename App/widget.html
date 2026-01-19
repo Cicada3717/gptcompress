@@ -361,9 +361,24 @@
                 key_facts: ["Project root is e:\\Gptcompress"]
             };
 
-            // Real Data Injection
+            // Real Data Injection from OpenAI
             if (window.openai && window.openai.toolOutput) {
-                data = window.openai.toolOutput;
+                const rawOutput = window.openai.toolOutput;
+                console.log('[Widget] Received toolOutput:', typeof rawOutput, rawOutput);
+
+                try {
+                    // Parse if it's a JSON string
+                    if (typeof rawOutput === 'string') {
+                        data = JSON.parse(rawOutput);
+                        console.log('[Widget] Parsed JSON data:', data);
+                    } else if (typeof rawOutput === 'object' && rawOutput !== null) {
+                        data = rawOutput;
+                        console.log('[Widget] Using object data:', data);
+                    }
+                } catch (e) {
+                    console.error('[Widget] Failed to parse toolOutput:', e);
+                    // Keep mock data as fallback
+                }
             }
 
             window.currentData = data;

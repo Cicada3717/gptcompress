@@ -110,14 +110,22 @@ function createMcpServer(): Server {
 
         console.log(`[MCP] Compression complete. Used ${compressionResult.tokensUsed} tokens`);
 
+        // Prepare data with stats for widget
+        const widgetData = {
+            ...compressionResult.data,
+            stats: `${optimizationResult.originalCount} → ${optimizationResult.optimizedCount} messages`
+        };
+
         return {
             content: [{
                 type: 'text',
-                text: `\u2705 Compressed ${messageCount} messages (saved ${optimizationResult.tokensEstimate.savedPercent}% tokens)`
+                text: JSON.stringify(widgetData)  // Widget receives this as toolOutput
             }],
-            structuredContent: compressionResult.data,
             _meta: {
                 'openai/outputTemplate': `${publicUrl}/widget`,
+                originalCount: optimizationResult.originalCount,
+                optimizedCount: optimizationResult.optimizedCount,
+                savedPercent: optimizationResult.tokensEstimate.savedPercent
             }
         };
     });
