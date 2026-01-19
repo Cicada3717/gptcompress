@@ -20,7 +20,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // Use PORT env var or default to 3000
 const port = Number(process.env.PORT) || 3000;
 const host = '0.0.0.0'; // Explicitly bind to Docker interface
-const publicUrl = process.env.PUBLIC_URL || `http://localhost:${port}`;
+// Prefer PUBLIC_URL, then construct from Railway var, then localhost
+const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN;
+const publicUrl = process.env.PUBLIC_URL || (railwayDomain ? `https://${railwayDomain}` : `http://localhost:${port}`);
 
 // Define tools
 const TOOLS: Tool[] = [
