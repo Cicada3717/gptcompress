@@ -1,0 +1,19 @@
+openapi: 3.0.1
+info:
+  title: GPTCompress API
+  description: API for compressing conversations and showing the dashboard.
+  version: 'v1'
+servers:
+  - url: https://<YOUR_RAILWAY_URL>
+paths:
+  /widget:
+    get:
+      operationId: get_dashboard
+      summary: Get the compression dashboard UI
+      responses:
+        "200":
+          description: OK
+          content:
+            text/html:
+              schema:
+                type: string

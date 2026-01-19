@@ -226,7 +226,7 @@ const httpServer = createServer(
         // Widget endpoint
         if (req.method === 'GET' && url.pathname === '/widget') {
             try {
-                const widgetPath = join(__dirname, '..', '..', 'widget', 'premium.html');
+                const widgetPath = join(__dirname, '..', '..', 'App', 'widget.html');
                 const html = readFileSync(widgetPath, 'utf-8');
                 res.writeHead(200, { 'Content-Type': 'text/html' });
                 res.end(html);
@@ -250,7 +250,37 @@ const httpServer = createServer(
             return;
         }
 
-        // Widget JavaScript
+        // OpenAPI Spec
+        if (req.method === 'GET' && url.pathname === '/openapi.yaml') {
+            try {
+                const specPath = join(__dirname, '..', '..', 'App', 'openapi.yaml');
+                let spec = readFileSync(specPath, 'utf-8');
+                // Dynamic replacement of URL
+                spec = spec.replace(/<YOUR_RAILWAY_URL>/g, publicUrl);
+                res.writeHead(200, { 'Content-Type': 'text/yaml' });
+                res.end(spec);
+            } catch (error) {
+                res.writeHead(404).end('OpenAPI spec not found');
+            }
+            return;
+        }
+
+        // AI Plugin Manifest
+        if (req.method === 'GET' && url.pathname === '/.well-known/ai-plugin.json') {
+            try {
+                const manifestPath = join(__dirname, '..', '..', 'App', '.well-known', 'ai-plugin.json');
+                let manifest = readFileSync(manifestPath, 'utf-8');
+                // Dynamic replacement of URL
+                manifest = manifest.replace(/<YOUR_RAILWAY_URL>/g, publicUrl);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(manifest);
+            } catch (error) {
+                res.writeHead(404).end('Manifest not found');
+            }
+            return;
+        }
+
+        // Widget JavaScript (Legacy support or if needed)
         if (req.method === 'GET' && url.pathname === '/widget/premium.js') {
             try {
                 const jsPath = join(__dirname, '..', '..', 'widget', 'premium.js');

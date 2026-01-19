@@ -1,0 +1,17 @@
+{
+    "schema_version": "v1",
+    "name_for_human": "GPTCompress",
+    "name_for_model": "gptcompress",
+    "description_for_human": "Compress long conversations into concise summaries with a custom dashboard.",
+    "description_for_model": "Compresses conversation history and displays a summary dashboard.",
+    "auth": {
+        "type": "none"
+    },
+    "api": {
+        "type": "openapi",
+        "url": "https://<YOUR_RAILWAY_URL>/openapi.yaml"
+    },
+    "logo_url": "https://gptcompress.vercel.app/logo.png",
+    "contact_email": "info@gptcompress.com",
+    "legal_info_url": "https://gptcompress.vercel.app/terms.html"
+}

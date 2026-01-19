@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPTCompress - Compressed Context</title>
+    <!-- Using inline CSS from premium.css for self-contained widget -->
+    <style>
+        :root {
+            /* Light Theme */
+            --bg-color: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --border-color: #e5e7eb;
+            --card-bg: #f9fafb;
+            --accent-primary: #10b981;
+            /* Emerald 500 */
+            --accent-secondary: #059669;
+            /* Emerald 600 */
+            --accent-surface: #d1fae5;
+            /* Emerald 100 */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Dark Theme Fallback - mostly overridden by ChatGPT's iframe context but good to have */
+                --bg-color: #ffffff;
+                --text-primary: #1f2937;
+            }
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Header Badge */
+        .header-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+        }
+
+        .stats {
+            margin-left: 8px;
+            padding-left: 8px;
+            border-left: 1px solid rgba(255, 255, 255, 0.3);
+            font-weight: 400;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        /* Hero Summary */
+        .hero-card {
+            margin-bottom: 32px;
+        }
+
+        .summary {
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1.3;
+            color: #111827;
+            letter-spacing: -0.02em;
+        }
+
+        /* Structured Sections */
+        .sections-container {
+            display: grid;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .section {
+            background: #ffffff;
+            border-left: 3px solid transparent;
+            padding-left: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .section:hover {
+            border-left-color: var(--border-color);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .list li {
+            position: relative;
+            padding-left: 20px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-size: 15px;
+        }
+
+        .list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--accent-primary);
+            font-weight: bold;
+        }
+
+        /* Specific Section Styling */
+        #goals-section .section-header {
+            color: #059669;
+        }
+
+        #constraints-section .section-header {
+            color: #d97706;
+        }
+
+        /* Amber */
+        #decisions-section .section-header {
+            color: #2563eb;
+        }
+
+        /* Blue */
+
+        /* Actions */
+        .actions {
+            display: flex;
+            gap: 12px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: #111827;
+            color: white;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary:hover {
+            background: #000000;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--card-bg);
+            border-color: #d1d5db;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #111827;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+
+        .toast.visible {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header Badge -->
+        <div class="header-badge">
+            <span class="icon">📦</span>
+            <span class="label">Compressed Context</span>
+            <span class="stats" id="compression-stats">Loading stats...</span>
+        </div>
+
+        <!-- Hero Summary -->
+        <div class="hero-card">
+            <h1 class="summary" id="summary">Analyzing conversation...</h1>
+        </div>
+
+        <!-- Structured Data -->
+        <div class="sections-container">
+            <!-- Goals Section -->
+            <div class="section" id="goals-section">
+                <h2 class="section-header">Goals</h2>
+                <ul class="list" id="goals-list"></ul>
+            </div>
+
+            <!-- Decisions Section -->
+            <div class="section" id="decisions-section">
+                <h2 class="section-header">Key Decisions</h2>
+                <ul class="list" id="decisions-list"></ul>
+            </div>
+
+            <!-- Constraints Section -->
+            <div class="section" id="constraints-section">
+                <h2 class="section-header">Constraints</h2>
+                <ul class="list" id="constraints-list"></ul>
+            </div>
+
+            <!-- Open Questions Section -->
+            <div class="section" id="questions-section">
+                <h2 class="section-header">Open Questions</h2>
+                <ul class="list" id="questions-list"></ul>
+            </div>
+
+            <!-- Key Facts Section -->
+            <div class="section" id="facts-section">
+                <h2 class="section-header">Key Facts</h2>
+                <ul class="list" id="facts-list"></ul>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions">
+            <button class="btn btn-secondary" id="copy-btn">
+                <span>📋</span> Copy All
+            </button>
+            <button class="btn btn-primary" id="new-chat-btn">
+                <span>💬</span> Start New Chat <span style="opacity: 0.6">→</span>
+            </button>
+        </div>
+
+        <!-- Toast Notification -->
+        <div class="toast" id="toast">
+            <span id="toast-message">✓ Copied to clipboard</span>
+        </div>
+    </div>
+
+    <script>
+        // Data Handling
+        const defaultData = {
+            summary: "Conversation analysis pending. Please ensure the tool executed correctly.",
+            goal: ["Identify user intent"],
+            decisions: ["Waiting for input"],
+            constraints: ["None identified"],
+            open_questions: ["What is the primary objective?"],
+            key_facts: ["Session active"],
+            stats: "0 → 0 messages"
+        };
+
+        function renderData(data) {
+            // Stats
+            if (data.stats) {
+                document.getElementById('compression-stats').textContent = data.stats;
+            }
+
+            // Summary
+            if (data.summary) {
+                document.getElementById('summary').textContent = data.summary;
+            }
+
+            // Lists
+            const sections = {
+                'goals-list': data.goal,
+                'decisions-list': data.decisions,
+                'constraints-list': data.constraints,
+                'questions-list': data.open_questions,
+                'facts-list': data.key_facts
+            };
+
+            for (const [id, items] of Object.entries(sections)) {
+                const listEl = document.getElementById(id);
+                if (listEl) {
+                    listEl.innerHTML = (items && items.length > 0)
+                        ? items.map(item => `<li>${item}</li>`).join('')
+                        : '<li style="color: #9ca3af; font-style: italic;">None identified</li>';
+                }
+            }
+        }
+
+        // Copy Function
+        function copyToClipboard() {
+            const data = window.currentData || defaultData;
+
+            let text = `SUMMARY: ${data.summary}\n\n`;
+            if (data.goal?.length) text += `GOALS:\n${data.goal.map(i => '- ' + i).join('\n')}\n\n`;
+            if (data.decisions?.length) text += `DECISIONS:\n${data.decisions.map(i => '- ' + i).join('\n')}\n\n`;
+            if (data.constraints?.length) text += `CONSTRAINTS:\n${data.constraints.map(i => '- ' + i).join('\n')}\n\n`;
+            if (data.open_questions?.length) text += `OPEN QUESTIONS:\n${data.open_questions.map(i => '- ' + i).join('\n')}\n\n`;
+            if (data.key_facts?.length) text += `KEY FACTS:\n${data.key_facts.map(i => '- ' + i).join('\n')}`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.add('visible');
+                setTimeout(() => toast.classList.remove('visible'), 2000);
+            });
+        }
+
+        // New Chat Function
+        function startNewChat() {
+            // In a real app, this might trigger a window.openai action
+            // For now, we can clear the view or reload
+            window.open('https://chat.openai.com', '_blank');
+        }
+
+        // Init
+        window.addEventListener('load', () => {
+            // Mock Data for Preview
+            let data = {
+                stats: "42 → 5 messages",
+                summary: "Developed a comprehensive plan for building the GPTCompress Chrome Extension using the OpenAI Apps SDK.",
+                goal: ["Create a native-feeling UI widget", "Deploy to Railway"],
+                decisions: ["Use Inline display mode", "Merge premium styles into single file"],
+                constraints: ["Must be responsive", "No external dependencies if possible"],
+                open_questions: ["Does Railway require specific port config?"],
+                key_facts: ["Project root is e:\\Gptcompress"]
+            };
+
+            // Real Data Injection
+            if (window.openai && window.openai.toolOutput) {
+                data = window.openai.toolOutput;
+            }
+
+            window.currentData = data;
+            renderData(data);
+
+            // Listeners
+            document.getElementById('copy-btn').addEventListener('click', copyToClipboard);
+            document.getElementById('new-chat-btn').addEventListener('click', startNewChat);
+        });
+    </script>
+</body>
+
+</html>
