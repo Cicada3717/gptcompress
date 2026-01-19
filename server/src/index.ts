@@ -65,6 +65,7 @@ function createMcpServer(): Server {
         {
             capabilities: {
                 tools: {},
+                resources: {},  // Enable resources capability for widget
             },
         }
     );
@@ -77,6 +78,40 @@ function createMcpServer(): Server {
     const CompressionInputSchema = z.object({
         messages: z.array(MessageSchema)
     });
+
+    // Resource Handlers for Widget
+    server.setRequestHandler(
+        { method: 'resources/list' } as any,
+        async () => {
+            return {
+                resources: [{
+                    uri: 'ui://gptcompress/dashboard',
+                    name: 'Compressed Context Dashboard',
+                    description: 'Interactive dashboard showing compressed conversation context',
+                    mimeType: 'text/html+skybridge'
+                }]
+            };
+        }
+    );
+
+    server.setRequestHandler(
+        { method: 'resources/read' } as any,
+        async (request: any) => {
+            if (request.params.uri === 'ui://gptcompress/dashboard') {
+                const widgetPath = join(__dirname, '..', '..', 'App', 'widget.html');
+                const widgetHtml = readFileSync(widgetPath, 'utf-8');
+
+                return {
+                    contents: [{
+                        uri: 'ui://gptcompress/dashboard',
+                        mimeType: 'text/html+skybridge',
+                        text: widgetHtml
+                    }]
+                };
+            }
+            throw new Error(`Unknown resource: ${request.params.uri}`);
+        }
+    );
 
     server.setRequestHandler(ListToolsRequestSchema, async () => ({
         tools: TOOLS,
@@ -122,7 +157,7 @@ function createMcpServer(): Server {
                 text: JSON.stringify(widgetData)  // Widget receives this as toolOutput
             }],
             _meta: {
-                'openai/outputTemplate': `${publicUrl}/widget`,
+                'openai/outputTemplate': 'ui://gptcompress/dashboard',  // Use resource URI
                 originalCount: optimizationResult.originalCount,
                 optimizedCount: optimizationResult.optimizedCount,
                 savedPercent: optimizationResult.tokensEstimate.savedPercent
