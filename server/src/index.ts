@@ -111,23 +111,75 @@ function createMcpServer(): Server {
 
         console.log(`[MCP] Compression complete. Used ${compressionResult.tokensUsed} tokens`);
 
-        // Prepare data with stats for widget
-        const widgetData = {
-            ...compressionResult.data,
-            stats: `${optimizationResult.originalCount} → ${optimizationResult.optimizedCount} messages`
-        };
+        const data = compressionResult.data;
+
+        // Safety check
+        if (!data) {
+            return {
+                content: [{
+                    type: 'text',
+                    text: '⚠️ Compression succeeded but no data was returned.'
+                }]
+            };
+        }
+
+        // Create beautiful formatted text output
+        let formattedOutput = `✨ **Conversation Compressed Successfully**\n\n`;
+        formattedOutput += `📊 **Stats:** ${optimizationResult.originalCount} → ${optimizationResult.optimizedCount} messages (${optimizationResult.tokensEstimate.savedPercent}% tokens saved)\n\n`;
+        formattedOutput += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+        // Summary
+        formattedOutput += `📝 **Summary**\n${data.summary}\n\n`;
+
+        // Goals
+        if (data.goal && data.goal.length > 0) {
+            formattedOutput += `🎯 **Goals**\n`;
+            data.goal.forEach((item: string, i: number) => {
+                formattedOutput += `${i + 1}. ${item}\n`;
+            });
+            formattedOutput += `\n`;
+        }
+
+        // Key Decisions
+        if (data.decisions && data.decisions.length > 0) {
+            formattedOutput += `✅ **Key Decisions**\n`;
+            data.decisions.forEach((item: string, i: number) => {
+                formattedOutput += `${i + 1}. ${item}\n`;
+            });
+            formattedOutput += `\n`;
+        }
+
+        // Constraints
+        if (data.constraints && data.constraints.length > 0) {
+            formattedOutput += `⚠️ **Constraints**\n`;
+            data.constraints.forEach((item: string, i: number) => {
+                formattedOutput += `${i + 1}. ${item}\n`;
+            });
+            formattedOutput += `\n`;
+        }
+
+        // Open Questions
+        if (data.open_questions && data.open_questions.length > 0) {
+            formattedOutput += `❓ **Open Questions**\n`;
+            data.open_questions.forEach((item: string, i: number) => {
+                formattedOutput += `${i + 1}. ${item}\n`;
+            });
+            formattedOutput += `\n`;
+        }
+
+        // Key Facts
+        if (data.key_facts && data.key_facts.length > 0) {
+            formattedOutput += `💡 **Key Facts**\n`;
+            data.key_facts.forEach((item: string, i: number) => {
+                formattedOutput += `${i + 1}. ${item}\n`;
+            });
+        }
 
         return {
             content: [{
                 type: 'text',
-                text: JSON.stringify(widgetData)  // Widget receives this as toolOutput
-            }],
-            _meta: {
-                'openai/outputTemplate': `${publicUrl}/widget`,  // HTTP URL - ChatGPT fetches via HTTP!
-                originalCount: optimizationResult.originalCount,
-                optimizedCount: optimizationResult.optimizedCount,
-                savedPercent: optimizationResult.tokensEstimate.savedPercent
-            }
+                text: formattedOutput
+            }]
         };
     });
 
