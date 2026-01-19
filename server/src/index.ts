@@ -5,6 +5,8 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import {
     CallToolRequestSchema,
     ListToolsRequestSchema,
+    ListResourcesRequestSchema,
+    ReadResourceRequestSchema,
     CallToolRequest,
     Tool
 } from '@modelcontextprotocol/sdk/types.js';
@@ -81,7 +83,7 @@ function createMcpServer(): Server {
 
     // Resource Handlers for Widget
     server.setRequestHandler(
-        { method: 'resources/list' } as any,
+        ListResourcesRequestSchema,
         async () => {
             return {
                 resources: [{
@@ -95,7 +97,7 @@ function createMcpServer(): Server {
     );
 
     server.setRequestHandler(
-        { method: 'resources/read' } as any,
+        ReadResourceRequestSchema,
         async (request: any) => {
             if (request.params.uri === 'ui://gptcompress/dashboard') {
                 const widgetPath = join(__dirname, '..', '..', 'App', 'widget.html');
