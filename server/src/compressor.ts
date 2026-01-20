@@ -1,5 +1,6 @@
 /**
- * Compressor - GPT-4o-mini integration for conversation summarization
+ * Compressor - GPT-4o integration for conversation summarization
+ * OPTIMIZED FOR OPENAI TESTING PHASE
  */
 
 import OpenAI from 'openai';
@@ -23,34 +24,34 @@ const openai = new OpenAI({
 });
 
 /**
- * System prompt for compression
+ * System prompt for compression - OPTIMIZED FOR QUALITY
  * Designed to extract structured information reliably
  */
-const COMPRESSION_PROMPT = `You are a conversation compression expert. Your job is to extract key information from conversations and return it in a structured JSON format.
+const COMPRESSION_PROMPT = `You are GPTCompress, an expert conversation compression tool. Extract key information and return structured JSON.
 
-Analyze the conversation and extract:
-1. **goal**: What is the user trying to accomplish? (array of strings, max 5 items)
-2. **constraints**: What limitations or requirements were mentioned? (array, max 5)
-3. **decisions**: What choices were made? (array, max 5)
-4. **open_questions**: What questions remain unanswered? (array, max 5)
-5. **key_facts**: Critical information to remember (array, max 5)
-6. **summary**: One-paragraph overview of the conversation (string, max 150 words)
+Extract from the conversation:
+1. **goal**: User's objectives (array, 3-7 items, be specific)
+2. **constraints**: Limitations, requirements, rules mentioned (array, 3-7 items)
+3. **decisions**: Choices made, solutions agreed upon (array, 3-7 items)
+4. **open_questions**: Unresolved questions, pending items (array, 2-5 items)
+5. **key_facts**: Critical technical details, names, numbers, paths (array, 3-7 items)
+6. **summary**: Comprehensive overview of the conversation (string, 100-200 words)
 
-Rules:
-- Be concise (10-80 characters per item)
-- Focus on DECISIONS, not discussions
-- Remove conversational filler
-- Preserve technical details (file paths, function names, etc.)
-- If a category has no items, return empty array
+Quality Rules:
+- Be thorough - capture ALL important information
+- Be specific - include exact names, numbers, file paths, technical terms
+- Focus on DECISIONS and OUTCOMES, not just discussion
+- Preserve context that would be needed to continue the conversation
+- Each item should be self-contained and understandable independently
 
-Return ONLY valid JSON matching this structure:
+Return ONLY valid JSON:
 {
-  "goal": ["item1", "item2"],
-  "constraints": ["item1"],
-  "decisions": ["item1", "item2"],
-  "open_questions": ["item1"],
-  "key_facts": ["item1"],
-  "summary": "One paragraph summary."
+  "goal": ["specific goal 1", "specific goal 2"],
+  "constraints": ["constraint 1"],
+  "decisions": ["decision 1", "decision 2"],
+  "open_questions": ["question 1"],
+  "key_facts": ["fact 1", "fact 2"],
+  "summary": "Comprehensive paragraph summary."
 }`;
 
 /**
@@ -58,7 +59,7 @@ Return ONLY valid JSON matching this structure:
  */
 function formatMessagesForPrompt(messages: Message[]): string {
     return messages
-        .map((msg, idx) => `[${idx + 1}] ${msg.role}: ${msg.content}`)
+        .map((msg, idx) => `[${idx + 1}] ${msg.role.toUpperCase()}: ${msg.content}`)
         .join('\n\n');
 }
 
@@ -78,7 +79,7 @@ function validateCompressedData(data: any): data is CompressedContext {
 }
 
 /**
- * Main compression function
+ * Main compression function - USING GPT-4O FOR BEST QUALITY
  */
 export async function compressConversation(
     messages: Message[]
@@ -87,22 +88,26 @@ export async function compressConversation(
         // Format conversation for the prompt
         const conversationText = formatMessagesForPrompt(messages);
 
-        console.log(`[Compressor] Sending ${messages.length} messages to GPT-4o-mini`);
+        console.log(`[Compressor] Sending ${messages.length} messages to GPT-4o`);
+        const startTime = Date.now();
 
-        // Call OpenAI API
+        // Call OpenAI API with GPT-4o for best results
         const response = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
+            model: 'gpt-4o',  // BEST MODEL for testing phase
             messages: [
                 { role: 'system', content: COMPRESSION_PROMPT },
-                { role: 'user', content: `Compress this conversation:\n\n${conversationText}` }
+                { role: 'user', content: `Compress this conversation thoroughly:\n\n${conversationText}` }
             ],
-            temperature: 0.3,  // Low temperature for consistency
-            max_tokens: 1500,
+            temperature: 0.2,  // Lower for more consistent output
+            max_tokens: 2000,  // More tokens for comprehensive output
             response_format: { type: 'json_object' }  // Force JSON output
         });
 
+        const elapsed = Date.now() - startTime;
         const resultText = response.choices[0]?.message?.content;
         const tokensUsed = response.usage?.total_tokens || 0;
+
+        console.log(`[Compressor] Response in ${elapsed}ms, used ${tokensUsed} tokens`);
 
         if (!resultText) {
             return {
@@ -123,7 +128,7 @@ export async function compressConversation(
             };
         }
 
-        console.log(`[Compressor] Success! Used ${tokensUsed} tokens`);
+        console.log(`[Compressor] Success! Extracted ${parsedData.goal.length} goals, ${parsedData.decisions.length} decisions`);
 
         return {
             success: true,
