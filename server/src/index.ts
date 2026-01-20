@@ -395,33 +395,37 @@ const httpServer = createServer(
                 res.end(js);
             } catch (error) {
                 res.writeHead(404).end('JavaScript not found');
-                // OpenAI Domain Verification
-                if (req.method === 'GET' && url.pathname === '/.well-known/openai-apps-challenge') {
-                    const verificationToken = 'oUXPM8bm8bX-lniFLgkOdBwQhd3xlM6FsvCFsjr2w9k';
-                    res.writeHead(200, {
-                        'Content-Type': 'text/plain',
-                        'Access-Control-Allow-Origin': '*',
-                        'Cache-Control': 'no-cache'
-                    });
-                    res.end(verificationToken);
-                    return;
-                }
-
-                // SSE endpoint
-                if (req.method === 'GET' && url.pathname === ssePath) {
-                    await handleSseRequest(req, res);
-                    return;
-                }
-
-                // POST messages endpoint - accept both /mcp and /mcp/messages
-                if (req.method === 'POST' && (url.pathname === postPath || url.pathname === ssePath)) {
-                    await handlePostMessage(req, res, url);
-                    return;
-                }
-
-                // Default 404
-                res.writeHead(404).end('Not Found');
             }
+            return;
+        }
+
+        // OpenAI Domain Verification
+        if (req.method === 'GET' && url.pathname === '/.well-known/openai-apps-challenge') {
+            const verificationToken = 'oUXPM8bm8bX-IniFLgkOdBwQhd3xlM6FsvCFsjr2w9k';
+            res.writeHead(200, {
+                'Content-Type': 'text/plain',
+                'Access-Control-Allow-Origin': '*',
+                'Cache-Control': 'no-cache'
+            });
+            res.end(verificationToken);
+            return;
+        }
+
+        // SSE endpoint
+        if (req.method === 'GET' && url.pathname === ssePath) {
+            await handleSseRequest(req, res);
+            return;
+        }
+
+        // POST messages endpoint - accept both /mcp and /mcp/messages
+        if (req.method === 'POST' && (url.pathname === postPath || url.pathname === ssePath)) {
+            await handlePostMessage(req, res, url);
+            return;
+        }
+
+        // Default 404
+        res.writeHead(404).end('Not Found');
+    }
 );
 
 // ===== SECURITY: Request Timeout =====
