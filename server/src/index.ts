@@ -17,12 +17,58 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// ===== SECURITY: API Key Validation =====
+if (!process.env.OPENAI_API_KEY) {
+    console.error('❌ OPENAI_API_KEY not found in environment variables');
+    console.error('Please create a .env file with your OpenAI API key');
+    process.exit(1);
+}
+
+if (!process.env.OPENAI_API_KEY.startsWith('sk-')) {
+    console.warn('⚠️  OpenAI API key format looks incorrect (should start with sk-)');
+}
+
 // Use PORT env var or default to 3000
 const port = Number(process.env.PORT) || 3000;
 const host = '0.0.0.0'; // Explicitly bind to Docker interface
 // Prefer PUBLIC_URL, then construct from Railway var, then localhost
 const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN;
 const publicUrl = process.env.PUBLIC_URL || (railwayDomain ? `https://${railwayDomain}` : `http://localhost:${port}`);
+
+// ===== SECURITY: Input Validation Limits =====
+const MAX_MESSAGE_LENGTH = 5000; // characters per message
+const MAX_TOTAL_MESSAGES = 500;
+const MAX_CONVERSATION_LENGTH = 100000; // total characters
+
+// ===== SECURITY: CORS Whitelist =====
+const ALLOWED_ORIGINS = [
+    'https://chat.openai.com',
+    'https://chatgpt.com',
+    publicUrl
+];
+
+// ===== SECURITY: Rate Limiting =====
+const rateLimits = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
+const RATE_LIMIT_MAX = 10; // 10 requests per window
+
+function checkRateLimit(identifier: string): boolean {
+    const now = Date.now();
+    const limit = rateLimits.get(identifier);
+
+    if (!limit || now > limit.resetTime) {
+        rateLimits.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+        return true;
+    }
+
+    if (limit.count >= RATE_LIMIT_MAX) {
+        return false;
+    }
+
+    limit.count++;
+    return true;
+}
 
 // Define tools
 const TOOLS: Tool[] = [
@@ -48,12 +94,26 @@ const TOOLS: Tool[] = [
     }
 ];
 
-// Session management
+// ===== Session Management with Timeout Cleanup =====
 type SessionRecord = {
     server: Server;
     transport: SSEServerTransport;
+    lastActivity: number;
 };
 const sessions = new Map<string, SessionRecord>();
+const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
+// Session cleanup interval
+setInterval(() => {
+    const now = Date.now();
+    for (const [sessionId, session] of sessions) {
+        if (now - session.lastActivity > SESSION_TIMEOUT) {
+            console.log('[Cleanup] Removing stale session:', sessionId);
+            session.server.close().catch(console.error);
+            sessions.delete(sessionId);
+        }
+    }
+}, 5 * 60 * 1000); // Check every 5 minutes
 
 // Factory function to create a server instance
 function createMcpServer(): Server {
@@ -91,9 +151,25 @@ function createMcpServer(): Server {
         const args = CompressionInputSchema.parse(request.params.arguments);
         const messageCount = args.messages.length;
 
+        // ===== SECURITY: Input Validation =====
+        if (messageCount > MAX_TOTAL_MESSAGES) {
+            throw new Error(`Too many messages (max ${MAX_TOTAL_MESSAGES})`);
+        }
+
+        const totalLength = args.messages.reduce((sum, m) => sum + m.content.length, 0);
+        if (totalLength > MAX_CONVERSATION_LENGTH) {
+            throw new Error(`Conversation too long (max ${MAX_CONVERSATION_LENGTH} characters)`);
+        }
+
+        // Truncate individual messages if needed
+        const sanitizedMessages = args.messages.map(msg => ({
+            role: msg.role,
+            content: msg.content.slice(0, MAX_MESSAGE_LENGTH)
+        }));
+
         console.log(`[MCP] Received compression request for ${messageCount} messages`);
 
-        const optimizationResult = optimizeMessages(args.messages);
+        const optimizationResult = optimizeMessages(sanitizedMessages);
         console.log(`[MCP] Optimization: ${optimizationResult.originalCount} \u2192 ${optimizationResult.optimizedCount} messages`);
         console.log(`[MCP] Token savings: ${optimizationResult.tokensEstimate.savedPercent}%`);
 
@@ -190,16 +266,20 @@ function createMcpServer(): Server {
 const ssePath = '/mcp';
 const postPath = '/mcp/messages';
 
-async function handleSseRequest(res: ServerResponse) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    console.log('[SSE] New connection request');
+async function handleSseRequest(req: IncomingMessage, res: ServerResponse) {
+    // ===== SECURITY: CORS Whitelist =====
+    const origin = req.headers.origin;
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    console.log('[SSE] New connection request from:', origin);
 
     const server = createMcpServer();
     const transport = new SSEServerTransport(postPath, res);
     const sessionId = transport.sessionId;
 
     console.log('[SSE] Created session:', sessionId);
-    sessions.set(sessionId, { server, transport });
+    sessions.set(sessionId, { server, transport, lastActivity: Date.now() });
 
     transport.onclose = async () => {
         console.log('[SSE] Session closed:', sessionId);
@@ -228,8 +308,19 @@ async function handlePostMessage(
     res: ServerResponse,
     url: URL
 ) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // ===== SECURITY: CORS Whitelist =====
+    const origin = req.headers.origin;
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
     res.setHeader('Access-Control-Allow-Headers', 'content-type');
+
+    // ===== SECURITY: Rate Limiting =====
+    const clientIp = req.socket.remoteAddress || 'unknown';
+    if (!checkRateLimit(clientIp)) {
+        res.writeHead(429).end('Too many requests. Please try again later.');
+        return;
+    }
 
     const sessionId = url.searchParams.get('sessionId');
 
@@ -248,6 +339,9 @@ async function handlePostMessage(
         res.writeHead(404).end('Unknown session');
         return;
     }
+
+    // Update session activity
+    session.lastActivity = Date.now();
 
     try {
         console.log('[POST] Handling message...');
@@ -358,7 +452,7 @@ const httpServer = createServer(
 
         // SSE endpoint
         if (req.method === 'GET' && url.pathname === ssePath) {
-            await handleSseRequest(res);
+            await handleSseRequest(req, res);
             return;
         }
 
@@ -372,6 +466,9 @@ const httpServer = createServer(
         res.writeHead(404).end('Not Found');
     }
 );
+
+// ===== SECURITY: Request Timeout =====
+httpServer.setTimeout(30000); // 30 second timeout
 
 httpServer.on('clientError', (err: Error, socket) => {
     console.error('HTTP client error:', err);
