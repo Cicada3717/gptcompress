@@ -402,7 +402,11 @@ const httpServer = createServer(
         // OpenAI Domain Verification
         if (req.method === 'GET' && url.pathname === '/.well-known/openai-app-verification.txt') {
             const verificationToken = 'oUXPM8bm8bX-lniFLgkOdBwQhd3xlM6FsvCFsjr2w9k';
-            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.writeHead(200, {
+                'Content-Type': 'text/plain',
+                'Access-Control-Allow-Origin': '*',
+                'Cache-Control': 'no-cache'
+            });
             res.end(verificationToken);
             return;
         }
