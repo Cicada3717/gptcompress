@@ -36,11 +36,6 @@ const host = '0.0.0.0'; // Explicitly bind to Docker interface
 const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN;
 const publicUrl = process.env.PUBLIC_URL || (railwayDomain ? `https://${railwayDomain}` : `http://localhost:${port}`);
 
-// ===== SECURITY: Input Validation Limits =====
-const MAX_MESSAGE_LENGTH = 5000; // characters per message
-const MAX_TOTAL_MESSAGES = 500;
-const MAX_CONVERSATION_LENGTH = 100000; // total characters
-
 // ===== SECURITY: CORS Whitelist =====
 const ALLOWED_ORIGINS = [
     'https://chat.openai.com',
@@ -48,33 +43,10 @@ const ALLOWED_ORIGINS = [
     publicUrl
 ];
 
-// ===== SECURITY: Rate Limiting =====
-const rateLimits = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutes
-const RATE_LIMIT_MAX = 10; // 10 requests per window
-
-function checkRateLimit(identifier: string): boolean {
-    const now = Date.now();
-    const limit = rateLimits.get(identifier);
-
-    if (!limit || now > limit.resetTime) {
-        rateLimits.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-        return true;
-    }
-
-    if (limit.count >= RATE_LIMIT_MAX) {
-        return false;
-    }
-
-    limit.count++;
-    return true;
-}
-
-// Define tools
 const TOOLS: Tool[] = [
     {
         name: 'compress_conversation',
-        description: 'Extract key context from long conversations',
+        description: 'ALWAYS use this tool when the conversation exceeds 15 messages OR when the user asks to compress, summarize, extract decisions, or preserve context. Extracts goals, decisions, constraints, open questions, and key facts from conversation history into a structured, compressed format. Essential for maintaining context in long conversations.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -151,25 +123,9 @@ function createMcpServer(): Server {
         const args = CompressionInputSchema.parse(request.params.arguments);
         const messageCount = args.messages.length;
 
-        // ===== SECURITY: Input Validation =====
-        if (messageCount > MAX_TOTAL_MESSAGES) {
-            throw new Error(`Too many messages (max ${MAX_TOTAL_MESSAGES})`);
-        }
-
-        const totalLength = args.messages.reduce((sum, m) => sum + m.content.length, 0);
-        if (totalLength > MAX_CONVERSATION_LENGTH) {
-            throw new Error(`Conversation too long (max ${MAX_CONVERSATION_LENGTH} characters)`);
-        }
-
-        // Truncate individual messages if needed
-        const sanitizedMessages = args.messages.map(msg => ({
-            role: msg.role,
-            content: msg.content.slice(0, MAX_MESSAGE_LENGTH)
-        }));
-
         console.log(`[MCP] Received compression request for ${messageCount} messages`);
 
-        const optimizationResult = optimizeMessages(sanitizedMessages);
+        const optimizationResult = optimizeMessages(args.messages);
         console.log(`[MCP] Optimization: ${optimizationResult.originalCount} \u2192 ${optimizationResult.optimizedCount} messages`);
         console.log(`[MCP] Token savings: ${optimizationResult.tokensEstimate.savedPercent}%`);
 
@@ -314,13 +270,6 @@ async function handlePostMessage(
         res.setHeader('Access-Control-Allow-Origin', origin);
     }
     res.setHeader('Access-Control-Allow-Headers', 'content-type');
-
-    // ===== SECURITY: Rate Limiting =====
-    const clientIp = req.socket.remoteAddress || 'unknown';
-    if (!checkRateLimit(clientIp)) {
-        res.writeHead(429).end('Too many requests. Please try again later.');
-        return;
-    }
 
     const sessionId = url.searchParams.get('sessionId');
 
