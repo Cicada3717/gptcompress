@@ -45,7 +45,7 @@ const ALLOWED_ORIGINS = [
 
 const TOOLS: Tool[] = [
     {
-        name: 'compress_conversation',
+        name: 'GPTCompress',
         description: 'ALWAYS use this tool when the conversation exceeds 15 messages OR when the user asks to compress, summarize, extract decisions, or preserve context. Extracts goals, decisions, constraints, open questions, and key facts from conversation history into a structured, compressed format. Essential for maintaining context in long conversations.',
         inputSchema: {
             type: 'object',
@@ -116,7 +116,7 @@ function createMcpServer(): Server {
     }));
 
     server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest) => {
-        if (request.params.name !== 'compress_conversation') {
+        if (request.params.name !== 'GPTCompress') {
             throw new Error(`Unknown tool: ${request.params.name}`);
         }
 
@@ -155,58 +155,65 @@ function createMcpServer(): Server {
             };
         }
 
-        // Create beautiful formatted text output
-        let formattedOutput = `✨ **Conversation Compressed Successfully**\n\n`;
-        formattedOutput += `📊 **Stats:** ${optimizationResult.originalCount} → ${optimizationResult.optimizedCount} messages (${optimizationResult.tokensEstimate.savedPercent}% tokens saved)\n\n`;
-        formattedOutput += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+        // Create beautiful formatted text output with clear branding
+        let formattedOutput = `\n`;
+        formattedOutput += `╔══════════════════════════════════════════╗\n`;
+        formattedOutput += `║  ✨ GPTCompress - Conversation Summary   ║\n`;
+        formattedOutput += `╚══════════════════════════════════════════╝\n\n`;
+        formattedOutput += `📊 **${optimizationResult.originalCount} messages → ${optimizationResult.optimizedCount} key points** (${optimizationResult.tokensEstimate.savedPercent}% reduction)\n\n`;
+        formattedOutput += `───────────────────────────────────\n\n`;
 
-        // Summary
-        formattedOutput += `📝 **Summary**\n${data.summary}\n\n`;
+        // Summary - always show first
+        formattedOutput += `📝 **SUMMARY**\n${data.summary}\n\n`;
 
         // Goals
         if (data.goal && data.goal.length > 0) {
-            formattedOutput += `🎯 **Goals**\n`;
+            formattedOutput += `🎯 **GOALS**\n`;
             data.goal.forEach((item: string, i: number) => {
-                formattedOutput += `${i + 1}. ${item}\n`;
+                formattedOutput += `   ${i + 1}. ${item}\n`;
             });
             formattedOutput += `\n`;
         }
 
         // Key Decisions
         if (data.decisions && data.decisions.length > 0) {
-            formattedOutput += `✅ **Key Decisions**\n`;
+            formattedOutput += `✅ **DECISIONS MADE**\n`;
             data.decisions.forEach((item: string, i: number) => {
-                formattedOutput += `${i + 1}. ${item}\n`;
+                formattedOutput += `   ${i + 1}. ${item}\n`;
             });
             formattedOutput += `\n`;
         }
 
         // Constraints
         if (data.constraints && data.constraints.length > 0) {
-            formattedOutput += `⚠️ **Constraints**\n`;
+            formattedOutput += `⚠️ **CONSTRAINTS**\n`;
             data.constraints.forEach((item: string, i: number) => {
-                formattedOutput += `${i + 1}. ${item}\n`;
+                formattedOutput += `   ${i + 1}. ${item}\n`;
             });
             formattedOutput += `\n`;
         }
 
         // Open Questions
         if (data.open_questions && data.open_questions.length > 0) {
-            formattedOutput += `❓ **Open Questions**\n`;
+            formattedOutput += `❓ **OPEN QUESTIONS**\n`;
             data.open_questions.forEach((item: string, i: number) => {
-                formattedOutput += `${i + 1}. ${item}\n`;
+                formattedOutput += `   ${i + 1}. ${item}\n`;
             });
             formattedOutput += `\n`;
         }
 
         // Key Facts
         if (data.key_facts && data.key_facts.length > 0) {
-            formattedOutput += `💡 **Key Facts**\n`;
+            formattedOutput += `💡 **KEY FACTS**\n`;
             data.key_facts.forEach((item: string, i: number) => {
-                formattedOutput += `${i + 1}. ${item}\n`;
+                formattedOutput += `   ${i + 1}. ${item}\n`;
             });
+            formattedOutput += `\n`;
         }
 
+        // Footer
+        formattedOutput += `───────────────────────────────────\n`;
+        formattedOutput += `💾 *Context preserved by GPTCompress*\n`;
         return {
             content: [{
                 type: 'text',
