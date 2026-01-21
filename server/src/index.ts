@@ -268,6 +268,166 @@ async function handleSseRequest(req: IncomingMessage, res: ServerResponse) {
         if (!res.headersSent) {
             res.writeHead(500).end('Failed to establish SSE connection');
         }
+        await transport.onerror?.(error as Error);
+    }
+}
+
+// Handle stateless POST requests (no SSE session required)
+async function handleStatelessToolCall(req: IncomingMessage, res: ServerResponse) {
+    // Set CORS headers
+    const origin = req.headers.origin;
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.setHeader('Access-Control-Allow-Headers', 'content-type');
+    res.setHeader('Content-Type', 'application/json');
+
+    try {
+        // Read request body
+        const body = await new Promise<string>((resolve, reject) => {
+            let data = '';
+            req.on('data', chunk => data += chunk);
+            req.on('end', () => resolve(data));
+            req.on('error', reject);
+        });
+
+        const jsonRpcRequest = JSON.parse(body);
+        console.log('[Stateless] Received JSON-RPC request:', jsonRpcRequest.method);
+
+        // Handle tools/list
+        if (jsonRpcRequest.method === 'tools/list') {
+            res.writeHead(200);
+            res.end(JSON.stringify({
+                jsonrpc: '2.0',
+                id: jsonRpcRequest.id,
+                result: { tools: TOOLS }
+            }));
+            return;
+        }
+
+        // Handle tools/call
+        if (jsonRpcRequest.method === 'tools/call') {
+            const toolName = jsonRpcRequest.params?.name;
+
+            // Accept both tool names as aliases
+            if (toolName !== 'GPTCompress' && toolName !== 'compress_conversation') {
+                res.writeHead(200);
+                res.end(JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: jsonRpcRequest.id,
+                    error: {
+                        code: -32601,
+                        message: `Unknown tool: ${toolName}`
+                    }
+                }));
+                return;
+            }
+
+            console.log(`[Stateless] Tool called: ${toolName}`);
+
+            // Validate and parse arguments
+            const MessageSchema = z.object({
+                role: z.string(),
+                content: z.string()
+            });
+            const CompressionInputSchema = z.object({
+                messages: z.array(MessageSchema)
+            });
+
+            const args = CompressionInputSchema.parse(jsonRpcRequest.params.arguments);
+            const messageCount = args.messages.length;
+
+            console.log(`[Stateless] Compression request for ${messageCount} messages`);
+
+            // Execute compression
+            const optimizationResult = optimizeMessages(args.messages);
+            console.log(`[Stateless] Optimization: ${optimizationResult.originalCount} → ${optimizationResult.optimizedCount} messages`);
+
+            const compressionResult = await compressConversation(optimizationResult.optimized);
+
+            if (!compressionResult.success) {
+                res.writeHead(200);
+                res.end(JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: jsonRpcRequest.id,
+                    result: {
+                        content: [{
+                            type: 'text',
+                            text: `❌ Compression failed: ${compressionResult.error}`
+                        }],
+                        isError: true
+                    }
+                }));
+                return;
+            }
+
+            // Format successful response
+            const data = compressionResult.data!;  // Non-null since success=true
+            const output = `
+╔════════════════════════════════════════════════════════╗
+║          📦 CONVERSATION COMPRESSED                    ║
+╚════════════════════════════════════════════════════════╝
+
+**📋 Summary**
+${data.summary}
+
+**🎯 Goals** (${data.goal.length})
+${data.goal.map(g => `• ${g}`).join('\n')}
+
+**✅ Decisions Made** (${data.decisions.length})
+${data.decisions.map(d => `• ${d}`).join('\n')}
+
+**⚠️ Constraints** (${data.constraints.length})
+${data.constraints.map(c => `• ${c}`).join('\n')}
+
+**❓ Open Questions** (${data.open_questions.length})
+${data.open_questions.map(q => `• ${q}`).join('\n')}
+
+**💡 Key Facts** (${data.key_facts.length})
+${data.key_facts.map(f => `• ${f}`).join('\n')}
+
+╔════════════════════════════════════════════════════════╗
+║  ✓ Context preserved · ${compressionResult.tokensUsed} tokens used      ║
+╚════════════════════════════════════════════════════════╝
+            `.trim();
+
+            res.writeHead(200);
+            res.end(JSON.stringify({
+                jsonrpc: '2.0',
+                id: jsonRpcRequest.id,
+                result: {
+                    content: [{
+                        type: 'text',
+                        text: output
+                    }]
+                }
+            }));
+            console.log('[Stateless] Response sent successfully');
+            return;
+        }
+
+        // Unknown method
+        res.writeHead(200);
+        res.end(JSON.stringify({
+            jsonrpc: '2.0',
+            id: jsonRpcRequest.id,
+            error: {
+                code: -32601,
+                message: `Method not found: ${jsonRpcRequest.method}`
+            }
+        }));
+
+    } catch (error) {
+        console.error('[Stateless] Error:', error);
+        res.writeHead(500);
+        res.end(JSON.stringify({
+            jsonrpc: '2.0',
+            id: null,
+            error: {
+                code: -32603,
+                message: String(error)
+            }
+        }));
     }
 }
 
@@ -288,16 +448,10 @@ async function handlePostMessage(
     console.log('[POST] Session ID:', sessionId);
     console.log('[POST] Active sessions:', Array.from(sessions.keys()));
 
-    // Require proper SSE connection - no ephemeral sessions
+    // Route to stateless handler if no sessionId
     if (!sessionId) {
-        console.error('[POST] No sessionId provided - client must establish SSE connection first');
-        res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-            error: 'Missing sessionId',
-            message: 'Client must establish SSE connection at GET /mcp before sending POST requests',
-            retryable: false
-        }));
-        return;
+        console.log('[POST] No sessionId - routing to stateless handler');
+        return handleStatelessToolCall(req, res);
     }
 
     const session = sessions.get(sessionId);
