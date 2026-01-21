@@ -116,9 +116,14 @@ function createMcpServer(): Server {
     }));
 
     server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest) => {
-        if (request.params.name !== 'GPTCompress') {
-            throw new Error(`Unknown tool: ${request.params.name}`);
+        const toolName = request.params.name;
+
+        // Accept both current name and legacy name as alias
+        if (toolName !== 'GPTCompress' && toolName !== 'compress_conversation') {
+            throw new Error(`Unknown tool: ${toolName}`);
         }
+
+        console.log(`[MCP] Tool called: ${toolName}`);
 
         const args = CompressionInputSchema.parse(request.params.arguments);
         const messageCount = args.messages.length;
