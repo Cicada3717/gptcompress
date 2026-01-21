@@ -294,6 +294,26 @@ async function handleStatelessToolCall(req: IncomingMessage, res: ServerResponse
         const jsonRpcRequest = JSON.parse(body);
         console.log('[Stateless] Received JSON-RPC request:', jsonRpcRequest.method);
 
+        // Handle initialize
+        if (jsonRpcRequest.method === 'initialize') {
+            res.writeHead(200);
+            res.end(JSON.stringify({
+                jsonrpc: '2.0',
+                id: jsonRpcRequest.id,
+                result: {
+                    protocolVersion: '2024-11-05',
+                    serverInfo: {
+                        name: 'gptcompress',
+                        version: '0.1.0'
+                    },
+                    capabilities: {
+                        tools: {}
+                    }
+                }
+            }));
+            return;
+        }
+
         // Handle tools/list
         if (jsonRpcRequest.method === 'tools/list') {
             res.writeHead(200);
