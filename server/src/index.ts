@@ -17,7 +17,6 @@ import { compressConversation } from './compressor.js';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { WIDGET_HTML } from './widget.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -170,11 +169,15 @@ function createMcpServer(): Server {
     server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         if (request.params.uri === "ui://compress/result.html") {
             try {
+                // Serve the React widget HTML
+                const widgetPath = join(__dirname, '..', '..', 'App', 'index.html');
+                const html = readFileSync(widgetPath, 'utf-8');
+
                 return {
                     contents: [{
                         uri: "ui://compress/result.html",
                         mimeType: "text/html+skybridge",
-                        text: WIDGET_HTML,
+                        text: html,
                         _meta: {
                             "openai/widgetPrefersBorder": true
                         }
@@ -440,21 +443,38 @@ async function handleStatelessToolCall(req: IncomingMessage, res: ServerResponse
         if (jsonRpcRequest.method === 'resources/read') {
             const uri = jsonRpcRequest.params?.uri;
             if (uri === "ui://compress/result.html") {
-                res.writeHead(200);
-                res.end(JSON.stringify({
-                    jsonrpc: '2.0',
-                    id: jsonRpcRequest.id,
-                    result: {
-                        contents: [{
-                            uri: "ui://compress/result.html",
-                            mimeType: "text/html+skybridge",
-                            text: WIDGET_HTML,
-                            _meta: {
-                                "openai/widgetPrefersBorder": true
-                            }
-                        }]
-                    }
-                }));
+                try {
+                    // Serve the React widget HTML
+                    const widgetPath = join(__dirname, '..', '..', 'App', 'index.html');
+                    const html = readFileSync(widgetPath, 'utf-8');
+
+                    res.writeHead(200);
+                    res.end(JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: jsonRpcRequest.params.uri,
+                        result: {
+                            contents: [{
+                                uri: "ui://compress/result.html",
+                                mimeType: "text/html+skybridge",
+                                text: html,
+                                _meta: {
+                                    "openai/widgetPrefersBorder": true
+                                }
+                            }]
+                        }
+                    }));
+                } catch (error) {
+                    console.error('Failed to serve widget:', error);
+                    res.writeHead(200);
+                    res.end(JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: jsonRpcRequest.id,
+                        error: {
+                            code: -32603,
+                            message: "Failed to load widget template"
+                        }
+                    }));
+                }
             } else {
                 res.writeHead(200);
                 res.end(JSON.stringify({
@@ -789,6 +809,38 @@ const httpServer = createServer(
                 res.end(manifest);
             } catch (error) {
                 res.writeHead(404).end('Manifest not found');
+            }
+            return;
+        }
+
+        // Widget React JS
+        if (req.method === 'GET' && url.pathname === '/widget-react.js') {
+            try {
+                const jsPath = join(__dirname, '..', '..', 'App', 'widget-react.js');
+                const js = readFileSync(jsPath, 'utf-8');
+                res.writeHead(200, {
+                    'Content-Type': 'application/javascript',
+                    'Access-Control-Allow-Origin': '*'
+                });
+                res.end(js);
+            } catch (error) {
+                res.writeHead(404).end('Widget JS not found');
+            }
+            return;
+        }
+
+        // Widget React CSS
+        if (req.method === 'GET' && url.pathname === '/widget-react.css') {
+            try {
+                const cssPath = join(__dirname, '..', '..', 'App', 'widget-react.css');
+                const css = readFileSync(cssPath, 'utf-8');
+                res.writeHead(200, {
+                    'Content-Type': 'text/css',
+                    'Access-Control-Allow-Origin': '*'
+                });
+                res.end(css);
+            } catch (error) {
+                res.writeHead(404).end('Widget CSS not found');
             }
             return;
         }
