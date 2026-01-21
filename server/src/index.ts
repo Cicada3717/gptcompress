@@ -175,7 +175,9 @@ function createMcpServer(): Server {
                     mimeType: "text/html+skybridge",
                     text: WIDGET_HTML,
                     _meta: {
-                        "openai/widgetPrefersBorder": false
+                        "openai/widgetPrefersBorder": false,
+                        "openai/widgetDomain": process.env.RAILWAY_PUBLIC_DOMAIN || "gptcompress-production.up.railway.app",
+                        "openai/widgetContentSecurityPolicy": "default-src 'self' 'unsafe-inline' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
                     }
                 }]
             };
@@ -445,7 +447,9 @@ async function handleStatelessToolCall(req: IncomingMessage, res: ServerResponse
                             mimeType: "text/html+skybridge",
                             text: WIDGET_HTML,
                             _meta: {
-                                "openai/widgetPrefersBorder": false
+                                "openai/widgetPrefersBorder": false,
+                                "openai/widgetDomain": process.env.RAILWAY_PUBLIC_DOMAIN || "gptcompress-production.up.railway.app",
+                                "openai/widgetContentSecurityPolicy": "default-src 'self' 'unsafe-inline' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
                             }
                         }]
                     }
