@@ -6,71 +6,74 @@ export function useToolOutput() {
 
     useEffect(() => {
         const fetchData = () => {
-            console.log('[Widget] Checking for data...');
-            console.log('[Widget] window.openai:', window.openai);
+            if (typeof window === 'undefined' || !window.openai) {
+                console.log('[Widget] window.openai not available');
+                return;
+            }
 
-            if (typeof window !== 'undefined' && window.openai) {
-                const toolOutput = window.openai.toolOutput;
-                console.log('[Widget] Raw toolOutput:', toolOutput);
+            console.log('[Widget] Full window.openai:', JSON.stringify(window.openai, null, 2));
 
-                if (toolOutput) {
-                    let parsed = null;
+            // Try multiple sources in priority order
+            let parsed = null;
 
-                    // Try to get structuredContent first
-                    if (toolOutput.structuredContent) {
-                        parsed = toolOutput.structuredContent;
-                        console.log('[Widget] From structuredContent:', parsed);
-                    }
-                    // If toolOutput is a string, try to parse it
-                    else if (typeof toolOutput === 'string') {
-                        try {
-                            const jsonObj = JSON.parse(toolOutput);
-                            parsed = jsonObj.structuredContent || jsonObj;
-                            console.log('[Widget] Parsed from string:', parsed);
-                        } catch (e) {
-                            console.log('[Widget] Not JSON string');
-                        }
-                    }
-                    // Direct object
-                    else if (typeof toolOutput === 'object') {
-                        parsed = toolOutput;
-                        console.log('[Widget] Direct object:', parsed);
-                    }
+            // 1. Try toolOutput (official way - but has known bug)
+            if (window.openai.toolOutput) {
+                const output = window.openai.toolOutput;
+                parsed = output.structuredContent || output;
+                console.log('[Widget] Got data from toolOutput:', parsed);
+            }
 
-                    if (parsed && (parsed.summary || parsed.goal)) {
-                        setData({
-                            summary: parsed.summary || "Summary unavailable",
-                            goal: parsed.goal || [],
-                            decisions: parsed.decisions || [],
-                            open_questions: parsed.open_questions || [],
-                            constraints: parsed.constraints || [],
-                            key_facts: parsed.key_facts || [],
-                            stats: parsed.stats || "Compressed"
-                        });
-                        setLoading(false);
-                        console.log('[Widget] Data set successfully!');
-                    }
-                }
+            // 2. Try toolResponseMetadata (from _meta field)
+            if (!parsed && window.openai.toolResponseMetadata) {
+                parsed = window.openai.toolResponseMetadata;
+                console.log('[Widget] Got data from toolResponseMetadata:', parsed);
+            }
+
+            // 3. Try widgetState (if we stored it)
+            if (!parsed && window.openai.widgetState) {
+                parsed = window.openai.widgetState;
+                console.log('[Widget] Got data from widgetState:', parsed);
+            }
+
+            // 4. Try toolInput as last resort (contains the input messages)
+            if (!parsed && window.openai.toolInput) {
+                console.log('[Widget] toolInput available:', window.openai.toolInput);
+                // toolInput contains the messages that were compressed
+                // We can use this to show something meaningful
+            }
+
+            if (parsed && (parsed.summary || parsed.goal)) {
+                setData({
+                    summary: parsed.summary || "Summary unavailable",
+                    goal: parsed.goal || [],
+                    decisions: parsed.decisions || [],
+                    open_questions: parsed.open_questions || [],
+                    constraints: parsed.constraints || [],
+                    key_facts: parsed.key_facts || [],
+                    stats: parsed.stats || "Compressed"
+                });
+                setLoading(false);
+                console.log('[Widget] Data loaded successfully!');
             }
         };
 
-        // Try immediately
+        // Listen for the openai:set_globals event (documented workaround)
+        const handleSetGlobals = (event) => {
+            console.log('[Widget] Received openai:set_globals event:', event);
+            fetchData();
+        };
+
+        window.addEventListener('openai:set_globals', handleSetGlobals);
+
+        // Also try immediately and with retries
         fetchData();
-
-        // Retry a few times in case data loads late
-        const intervals = [100, 500, 1000, 2000, 3000];
-        const timers = intervals.map(ms => setTimeout(fetchData, ms));
-
-        // Also listen for events
-        if (typeof window !== 'undefined') {
-            window.addEventListener('message', fetchData);
-        }
+        const timers = [100, 300, 600, 1000, 2000, 3000].map(ms =>
+            setTimeout(fetchData, ms)
+        );
 
         return () => {
+            window.removeEventListener('openai:set_globals', handleSetGlobals);
             timers.forEach(clearTimeout);
-            if (typeof window !== 'undefined') {
-                window.removeEventListener('message', fetchData);
-            }
         };
     }, []);
 
