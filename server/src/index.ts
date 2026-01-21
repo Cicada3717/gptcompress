@@ -472,7 +472,7 @@ const httpServer = createServer(
 );
 
 // ===== SECURITY: Request Timeout =====
-httpServer.setTimeout(30000); // 30 second timeout
+httpServer.setTimeout(120000); // 120 second timeout (increased from 30s to allow for AI processing)
 
 httpServer.on('clientError', (err: Error, socket) => {
     console.error('HTTP client error:', err);

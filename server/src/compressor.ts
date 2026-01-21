@@ -79,7 +79,7 @@ function validateCompressedData(data: any): data is CompressedContext {
 const RETRY_CONFIG = {
     maxRetries: 2,              // Reduced: 2 retries (3 attempts total)
     baseDelayMs: 500,           // Reduced: 0.5s, 1s backoff
-    timeoutMs: 30000,           // Reduced: 30 second timeout (was 60)
+    timeoutMs: 45000,           // Adjusted: 45 second timeout (safe middle ground)
 };
 
 /**
