@@ -403,7 +403,8 @@ async function handleStatelessToolCall(req: IncomingMessage, res: ServerResponse
                         version: '0.1.0'
                     },
                     capabilities: {
-                        tools: {}
+                        tools: {},
+                        resources: {}
                     }
                 }
             }));
@@ -418,6 +419,56 @@ async function handleStatelessToolCall(req: IncomingMessage, res: ServerResponse
                 id: jsonRpcRequest.id,
                 result: { tools: TOOLS }
             }));
+            return;
+        }
+
+        // Handle resources/list
+        if (jsonRpcRequest.method === 'resources/list') {
+            res.writeHead(200);
+            res.end(JSON.stringify({
+                jsonrpc: '2.0',
+                id: jsonRpcRequest.id,
+                result: {
+                    resources: [{
+                        uri: "ui://compress/result.html",
+                        name: "Compression Widget",
+                        mimeType: "text/html+skybridge"
+                    }]
+                }
+            }));
+            return;
+        }
+
+        // Handle resources/read
+        if (jsonRpcRequest.method === 'resources/read') {
+            const uri = jsonRpcRequest.params?.uri;
+            if (uri === "ui://compress/result.html") {
+                res.writeHead(200);
+                res.end(JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: jsonRpcRequest.id,
+                    result: {
+                        contents: [{
+                            uri: "ui://compress/result.html",
+                            mimeType: "text/html+skybridge",
+                            text: WIDGET_HTML,
+                            _meta: {
+                                "openai/widgetPrefersBorder": true
+                            }
+                        }]
+                    }
+                }));
+            } else {
+                res.writeHead(200);
+                res.end(JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: jsonRpcRequest.id,
+                    error: {
+                        code: -32602,
+                        message: `Resource not found: ${uri}`
+                    }
+                }));
+            }
             return;
         }
 
