@@ -310,15 +310,12 @@ ${data.key_facts.length > 0 ? data.key_facts.map((f, i) => `${i + 1}. ${f}`).joi
             // Dual-mode output for visibility + machine readability
             structuredContent: {
                 summary: data.summary,
-                goals: data.goal,
+                goal: data.goal,
                 decisions: data.decisions,
-                questions: data.open_questions,
+                open_questions: data.open_questions,
                 constraints: data.constraints,
-                facts: data.key_facts,
-                metrics: {
-                    tokensUsed: compressionResult.tokensUsed,
-                    messageCount: messageCount
-                }
+                key_facts: data.key_facts,
+                stats: `${optimizationResult.originalCount} → ${optimizationResult.optimizedCount} messages`
             }
         } as any; // Cast to allow structuredContent
     });
@@ -620,17 +617,12 @@ ${data.key_facts.length > 0 ? data.key_facts.map((f, i) => `${i + 1}. ${f}`).joi
                     },
                     structuredContent: {
                         summary: data.summary,
-                        goals: data.goal,
+                        goal: data.goal,
                         decisions: data.decisions,
-                        questions: data.open_questions,
+                        open_questions: data.open_questions,
                         constraints: data.constraints,
-                        facts: data.key_facts,
-                        metrics: {
-                            originalMessageCount: optimizationResult.originalCount,
-                            compressedMessageCount: optimizationResult.optimizedCount,
-                            tokensUsed: compressionResult.tokensUsed,
-                            savingsEstimate: optimizationResult.tokensEstimate.savedPercent
-                        }
+                        key_facts: data.key_facts,
+                        stats: `${optimizationResult.originalCount} → ${optimizationResult.optimizedCount} messages`
                     }
                 }
             }));

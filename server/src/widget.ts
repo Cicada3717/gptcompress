@@ -46,14 +46,7 @@ export const WIDGET_HTML = `<!DOCTYPE html>
             margin: 0 auto;
         }
 
-        /* Header Badge Container */
-        .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
+        /* Header Badge */
         .header-badge {
             display: inline-flex;
             align-items: center;
@@ -64,28 +57,8 @@ export const WIDGET_HTML = `<!DOCTYPE html>
             border-radius: 20px;
             font-weight: 600;
             font-size: 13px;
-            margin-bottom: 0; /* Override previous margin */
+            margin-bottom: 24px;
             box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
-        }
-
-        .expand-btn {
-            background: rgba(0, 0, 0, 0.05);
-            border: none;
-            cursor: pointer;
-            padding: 6px 12px;
-            border-radius: 12px;
-            color: var(--text-secondary);
-            font-size: 13px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-        }
-
-        .expand-btn:hover {
-            background: rgba(0, 0, 0, 0.1);
-            color: var(--text-primary);
         }
 
         .stats {
@@ -247,16 +220,11 @@ export const WIDGET_HTML = `<!DOCTYPE html>
 
 <body>
     <div class="container">
-        <!-- Header Row -->
-        <div class="header-row">
-            <div class="header-badge">
-                <span class="icon">📦</span>
-                <span class="label">Compressed Context</span>
-                <span class="stats" id="compression-stats">Loading stats...</span>
-            </div>
-            <button class="expand-btn" id="expand-btn" title="View Fullscreen">
-                ⤢ Expand
-            </button>
+        <!-- Header Badge -->
+        <div class="header-badge">
+            <span class="icon">📦</span>
+            <span class="label">Compressed Context</span>
+            <span class="stats" id="compression-stats">Loading stats...</span>
         </div>
 
         <!-- Hero Summary -->
@@ -404,8 +372,14 @@ export const WIDGET_HTML = `<!DOCTYPE html>
                         data = JSON.parse(rawOutput);
                         console.log('[Widget] Parsed JSON data:', data);
                     } else if (typeof rawOutput === 'object' && rawOutput !== null) {
-                        data = rawOutput;
-                        console.log('[Widget] Using object data:', data);
+                        // Check if structuredContent exists (MCP response format)
+                        if (rawOutput.structuredContent) {
+                            data = rawOutput.structuredContent;
+                            console.log('[Widget] Using structuredContent:', data);
+                        } else {
+                            data = rawOutput;
+                            console.log('[Widget] Using object data:', data);
+                        }
                     }
                 } catch (e) {
                     console.error('[Widget] Failed to parse toolOutput:', e);
@@ -419,21 +393,6 @@ export const WIDGET_HTML = `<!DOCTYPE html>
             // Listeners
             document.getElementById('copy-btn').addEventListener('click', copyToClipboard);
             document.getElementById('new-chat-btn').addEventListener('click', startNewChat);
-            
-            // Expand Button Listener
-            document.getElementById('expand-btn').addEventListener('click', async () => {
-                if (window.openai) {
-                    try {
-                        await window.openai.requestDisplayMode({ mode: "fullscreen" });
-                        console.log('[Widget] Requested fullscreen mode');
-                    } catch (e) {
-                        console.error('[Widget] Failed to request fullscreen:', e);
-                    }
-                } else {
-                    console.warn('[Widget] window.openai not available (local preview)');
-                    alert('Fullscreen mode requires ChatGPT environment.');
-                }
-            });
         });
     </script>
 </body>
