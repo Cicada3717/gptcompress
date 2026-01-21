@@ -361,6 +361,18 @@ async function handlePostMessage(
                 retryable: true
             }));
         }
+    } finally {
+        // CLEANUP EPHEMERAL SESSIONS
+        // These are one-off requests, so we shouldn't keep the server instance alive
+        if (sessionId && sessionId.startsWith('ephemeral-')) {
+            console.log('[POST] Cleaning up ephemeral session:', sessionId);
+            sessions.delete(sessionId);
+            try {
+                await session?.server.close();
+            } catch (e) {
+                console.error('Error closing ephemeral server:', e);
+            }
+        }
     }
 }
 
