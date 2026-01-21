@@ -129,7 +129,7 @@ function isRetryableError(error: any): boolean {
 /**
  * Main compression function - WITH RETRY LOGIC
  */
-export async function compressConversation(
+async function _compressInternal(
     messages: Message[]
 ): Promise<CompressionResult> {
     const conversationText = formatMessagesForPrompt(messages);
@@ -233,4 +233,53 @@ export async function compressConversation(
         success: false,
         error: lastError?.message || 'Compression failed after multiple retries'
     };
+}
+
+/**
+ * Creates a basic summary when strict processing times out (55s)
+ * Ensures user always gets a result instead of an error.
+ */
+function createFallbackSummary(messages: Message[]): CompressedContext {
+    const wordCount = messages.reduce((acc, m) => acc + m.content.split(' ').length, 0);
+
+    return {
+        summary: `⚠️ **Optimization Timeout Wrapper**: The conversation was too long to deeply analyze within the strict 55s limit. 
+        
+        **Quick Stats:**
+        - Message Count: ${messages.length}
+        - Approx Words: ${wordCount}
+        
+        The native ChatGPT context window should still handle this reasonably well manually.`,
+        goal: ["Maintain conversation flow", "Prevent timeout errors"],
+        constraints: ["Processing time > 55s"],
+        decisions: ["Returned fallback summary to prevent crash"],
+        open_questions: ["Specific details of the discussion"],
+        key_facts: [`Conversation length: ${messages.length} messages`]
+    };
+}
+
+/**
+ * Public API wrapper - with HARD 55s TIMEOUT
+ * Returns fallback result on timeout to ensure display.
+ */
+export async function compressConversation(messages: Message[]): Promise<CompressionResult> {
+    const TIMEOUT_MS = 55000; // 55s hard limit (under 60s ChatGPT limit)
+
+    // Create a timeout promise that resolves (not rejects) with fallback data
+    const timeoutPromise = new Promise<CompressionResult>((resolve) => {
+        setTimeout(() => {
+            console.log(`[Compressor] ⏱️ HARD TIMEOUT reached (${TIMEOUT_MS}ms). Returning fallback.`);
+            resolve({
+                success: true, // Return true so it displays
+                data: createFallbackSummary(messages),
+                error: 'Timeout: Returning partial summary due to high load.'
+            });
+        }, TIMEOUT_MS);
+    });
+
+    // Race the actual compression against the timeout
+    return Promise.race([
+        _compressInternal(messages),
+        timeoutPromise
+    ]);
 }
