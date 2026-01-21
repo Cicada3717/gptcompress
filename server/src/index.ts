@@ -46,7 +46,20 @@ const ALLOWED_ORIGINS = [
 const TOOLS: Tool[] = [
     {
         name: 'GPTCompress',
-        description: 'ALWAYS use this tool when the conversation exceeds 15 messages OR when the user asks to compress, summarize, extract decisions, or preserve context. Extracts goals, decisions, constraints, open questions, and key facts from conversation history into a structured, compressed format. Essential for maintaining context in long conversations.',
+        description: `Compress a long ChatGPT conversation (50+ messages) into structured categories: Goals, Decisions, Open Questions, Constraints, Key Facts, and Summary.
+
+**When to use this tool:**
+- User says "compress this conversation"
+- User mentions "@gptcompress"
+- User asks for "compressed summary" or "condense our chat"
+- Conversation is long and needs summarizing
+
+**Example user queries:**
+- "compress this"
+- "give me a compressed summary of our discussion"
+- "condense our entire conversation"
+
+IMPORTANT: You must display the tool output EXACTLY as returned. Do not summarize the summary. Do not rephrase. Just show the returned Markdown content directly to the user.`,
         inputSchema: {
             type: 'object',
             properties: {
@@ -161,64 +174,32 @@ function createMcpServer(): Server {
         }
 
         // Create beautiful formatted text output with clear branding
-        let formattedOutput = `\n`;
-        formattedOutput += `╔══════════════════════════════════════════╗\n`;
-        formattedOutput += `║  ✨ GPTCompress - Conversation Summary   ║\n`;
-        formattedOutput += `╚══════════════════════════════════════════╝\n\n`;
-        formattedOutput += `📊 **${optimizationResult.originalCount} messages → ${optimizationResult.optimizedCount} key points** (${optimizationResult.tokensEstimate.savedPercent}% reduction)\n\n`;
-        formattedOutput += `───────────────────────────────────\n\n`;
+        // Create clean Markdown output for direct display
+        let formattedOutput = `
+# 📦 CONVERSATION COMPRESSED
 
-        // Summary - always show first
-        formattedOutput += `📝 **SUMMARY**\n${data.summary}\n\n`;
+## 📋 Summary
+${data.summary}
 
-        // Goals
-        if (data.goal && data.goal.length > 0) {
-            formattedOutput += `🎯 **GOALS**\n`;
-            data.goal.forEach((item: string, i: number) => {
-                formattedOutput += `   ${i + 1}. ${item}\n`;
-            });
-            formattedOutput += `\n`;
-        }
+## 🎯 Goals (${data.goal.length})
+${data.goal.map(g => `- ${g}`).join('\n')}
 
-        // Key Decisions
-        if (data.decisions && data.decisions.length > 0) {
-            formattedOutput += `✅ **DECISIONS MADE**\n`;
-            data.decisions.forEach((item: string, i: number) => {
-                formattedOutput += `   ${i + 1}. ${item}\n`;
-            });
-            formattedOutput += `\n`;
-        }
+## ✅ Decisions Made (${data.decisions.length})
+${data.decisions.map(d => `- ${d}`).join('\n')}
 
-        // Constraints
-        if (data.constraints && data.constraints.length > 0) {
-            formattedOutput += `⚠️ **CONSTRAINTS**\n`;
-            data.constraints.forEach((item: string, i: number) => {
-                formattedOutput += `   ${i + 1}. ${item}\n`;
-            });
-            formattedOutput += `\n`;
-        }
+## ⚠️ Constraints (${data.constraints.length})
+${data.constraints.map(c => `- ${c}`).join('\n')}
 
-        // Open Questions
-        if (data.open_questions && data.open_questions.length > 0) {
-            formattedOutput += `❓ **OPEN QUESTIONS**\n`;
-            data.open_questions.forEach((item: string, i: number) => {
-                formattedOutput += `   ${i + 1}. ${item}\n`;
-            });
-            formattedOutput += `\n`;
-        }
+## ❓ Open Questions (${data.open_questions.length})
+${data.open_questions.map(q => `- ${q}`).join('\n')}
 
-        // Key Facts
-        if (data.key_facts && data.key_facts.length > 0) {
-            formattedOutput += `💡 **KEY FACTS**\n`;
-            data.key_facts.forEach((item: string, i: number) => {
-                formattedOutput += `   ${i + 1}. ${item}\n`;
-            });
-            formattedOutput += `\n`;
-        }
+## 💡 Key Facts (${data.key_facts.length})
+${data.key_facts.map(f => `- ${f}`).join('\n')}
 
-        // Footer
-        formattedOutput += `───────────────────────────────────\n`;
-        formattedOutput += `💾 *Context preserved by GPTCompress*\n`;
+---
+*✓ Context preserved · ${compressionResult.tokensUsed} tokens used*
+        `.trim();
+
         return {
             content: [{
                 type: 'text',
@@ -381,34 +362,31 @@ async function handleStatelessToolCall(req: IncomingMessage, res: ServerResponse
                 return;
             }
 
-            // Format successful response
+            // Format successful response (Markdown)
             const data = compressionResult.data!;  // Non-null since success=true
             const output = `
-╔════════════════════════════════════════════════════════╗
-║          📦 CONVERSATION COMPRESSED                    ║
-╚════════════════════════════════════════════════════════╝
+# 📦 CONVERSATION COMPRESSED
 
-**📋 Summary**
+## 📋 Summary
 ${data.summary}
 
-**🎯 Goals** (${data.goal.length})
-${data.goal.map(g => `• ${g}`).join('\n')}
+## 🎯 Goals (${data.goal.length})
+${data.goal.map(g => `- ${g}`).join('\n')}
 
-**✅ Decisions Made** (${data.decisions.length})
-${data.decisions.map(d => `• ${d}`).join('\n')}
+## ✅ Decisions Made (${data.decisions.length})
+${data.decisions.map(d => `- ${d}`).join('\n')}
 
-**⚠️ Constraints** (${data.constraints.length})
-${data.constraints.map(c => `• ${c}`).join('\n')}
+## ⚠️ Constraints (${data.constraints.length})
+${data.constraints.map(c => `- ${c}`).join('\n')}
 
-**❓ Open Questions** (${data.open_questions.length})
-${data.open_questions.map(q => `• ${q}`).join('\n')}
+## ❓ Open Questions (${data.open_questions.length})
+${data.open_questions.map(q => `- ${q}`).join('\n')}
 
-**💡 Key Facts** (${data.key_facts.length})
-${data.key_facts.map(f => `• ${f}`).join('\n')}
+## 💡 Key Facts (${data.key_facts.length})
+${data.key_facts.map(f => `- ${f}`).join('\n')}
 
-╔════════════════════════════════════════════════════════╗
-║  ✓ Context preserved · ${compressionResult.tokensUsed} tokens used      ║
-╚════════════════════════════════════════════════════════╝
+---
+*✓ Context preserved · ${compressionResult.tokensUsed} tokens used*
             `.trim();
 
             res.writeHead(200);
