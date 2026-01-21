@@ -17,6 +17,7 @@ import { compressConversation } from './compressor.js';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { WIDGET_HTML } from './widget.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -169,20 +170,18 @@ function createMcpServer(): Server {
     server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         if (request.params.uri === "ui://compress/result.html") {
             try {
-                const widgetPath = join(__dirname, '..', '..', 'App', 'widget.html');
-                const html = readFileSync(widgetPath, 'utf-8');
                 return {
                     contents: [{
                         uri: "ui://compress/result.html",
                         mimeType: "text/html+skybridge",
-                        text: html,
+                        text: WIDGET_HTML,
                         _meta: {
                             "openai/widgetPrefersBorder": true
                         }
                     }]
                 };
             } catch (error) {
-                console.error('Failed to read widget file:', error);
+                console.error('Failed to serve widget:', error);
                 throw new Error("Failed to load widget template");
             }
         }
