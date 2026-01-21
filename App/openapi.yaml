@@ -6,6 +6,56 @@ info:
 servers:
   - url: https://<YOUR_RAILWAY_URL>
 paths:
+  /mcp/messages:
+    post:
+      operationId: compress_conversation
+      summary: Compress the conversation and return a summary with dashboard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                      content:
+                        type: string
+      responses:
+        "200":
+          description: Successful compression
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        text:
+                          type: string
+                  structuredContent:
+                    type: object
+                  _meta:
+                    type: object
+                    properties:
+                      openai/outputTemplate:
+                        type: string
+                      openai/toolInvocation/invoking:
+                        type: string
+                      openai/toolInvocation/invoked:
+                        type: string
+                      openai/presentationMode:
+                        type: string
   /widget:
     get:
       operationId: get_dashboard
