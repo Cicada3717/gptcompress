@@ -1,401 +1,479 @@
+// Premium branded loading widget - self-contained HTML
+// This avoids deployment path issues by embedding everything inline
+
 export const WIDGET_HTML = `<!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPTCompress - Compressed Context</title>
-    <!-- Using inline CSS from premium.css for self-contained widget -->
-    <style>
-        :root {
-            /* Light Theme */
-            --bg-color: #ffffff;
-            --text-primary: #1f2937;
-            --text-secondary: #4b5563;
-            --border-color: #e5e7eb;
-            --card-bg: #f9fafb;
-            --accent-primary: #10b981;
-            /* Emerald 500 */
-            --accent-secondary: #059669;
-            /* Emerald 600 */
-            --accent-surface: #d1fae5;
-            /* Emerald 100 */
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPTCompress</title>
+  <style>
+    :root {
+      --emerald-500: #10b981;
+      --emerald-400: #34d399;
+      --emerald-600: #059669;
+      --emerald-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --bg-dark: #0a0a0a;
+      --bg-card: rgba(255, 255, 255, 0.03);
+      --bg-glass: rgba(255, 255, 255, 0.05);
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.6);
+      --text-muted: rgba(255, 255, 255, 0.4);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+    }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                /* Dark Theme Fallback - mostly overridden by ChatGPT's iframe context but good to have */
-                --bg-color: #ffffff;
-                --text-primary: #1f2937;
-            }
-        }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            margin: 0;
-            padding: 20px;
-            font-size: 14px;
-            line-height: 1.5;
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
 
-        .container {
-            max-width: 700px;
-            margin: 0 auto;
-        }
+    .widget-container {
+      position: relative;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 40px 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
 
-        /* Header Badge */
-        .header-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: white;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 13px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
-        }
+    .bg-gradient {
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle at 30% 20%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 40%);
+      animation: gradientShift 8s ease-in-out infinite;
+      pointer-events: none;
+    }
 
-        .stats {
-            margin-left: 8px;
-            padding-left: 8px;
-            border-left: 1px solid rgba(255, 255, 255, 0.3);
-            font-weight: 400;
-            font-size: 13px;
-            opacity: 0.9;
-        }
+    @keyframes gradientShift {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      50% { transform: translate(-5%, 5%) rotate(5deg); }
+    }
 
-        /* Hero Summary */
-        .hero-card {
-            margin-bottom: 32px;
-        }
+    .brand-section {
+      text-align: center;
+      margin-bottom: 48px;
+      z-index: 1;
+    }
 
-        .summary {
-            font-size: 24px;
-            font-weight: 700;
-            line-height: 1.3;
-            color: #111827;
-            letter-spacing: -0.02em;
-        }
+    .logo-container {
+      position: relative;
+      width: 100px; height: 100px;
+      margin: 0 auto 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-        /* Structured Sections */
-        .sections-container {
-            display: grid;
-            gap: 24px;
-            margin-bottom: 32px;
-        }
+    .logo-ring {
+      position: absolute;
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      border: 2px solid var(--emerald-500);
+      opacity: 0.3;
+      animation: ringPulse 2s ease-in-out infinite;
+    }
 
-        .section {
-            background: #ffffff;
-            border-left: 3px solid transparent;
-            padding-left: 16px;
-            transition: all 0.2s ease;
-        }
+    .logo-ring.delay-1 { animation-delay: 0.3s; }
+    .logo-ring.delay-2 { animation-delay: 0.6s; }
 
-        .section:hover {
-            border-left-color: var(--border-color);
-        }
+    @keyframes ringPulse {
+      0%, 100% { transform: scale(1); opacity: 0.3; }
+      50% { transform: scale(1.2); opacity: 0; }
+    }
 
-        .section-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-        }
+    .logo-container.complete .logo-ring {
+      animation: none;
+      border-color: var(--emerald-400);
+      opacity: 0.5;
+    }
 
-        .list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
+    .logo-icon {
+      font-size: 40px;
+      z-index: 1;
+    }
 
-        .list li {
-            position: relative;
-            padding-left: 20px;
-            margin-bottom: 8px;
-            color: var(--text-primary);
-            font-size: 15px;
-        }
+    .logo-container.complete .logo-icon {
+      animation: checkBounce 0.5s ease;
+    }
 
-        .list li::before {
-            content: "•";
-            position: absolute;
-            left: 0;
-            color: var(--accent-primary);
-            font-weight: bold;
-        }
+    @keyframes checkBounce {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
 
-        /* Specific Section Styling */
-        #goals-section .section-header {
-            color: #059669;
-        }
+    .brand-name {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: var(--emerald-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
 
-        #constraints-section .section-header {
-            color: #d97706;
-        }
+    .brand-tagline {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
 
-        /* Amber */
-        #decisions-section .section-header {
-            color: #2563eb;
-        }
+    .status-section {
+      width: 100%;
+      z-index: 1;
+    }
 
-        /* Blue */
+    .status-text {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
 
-        /* Actions */
-        .actions {
-            display: flex;
-            gap: 12px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border-color);
-        }
+    .status-label {
+      font-size: 16px;
+      font-weight: 500;
+    }
 
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: 500;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: inherit;
-        }
+    .status-dots {
+      display: flex;
+      gap: 4px;
+    }
 
-        .btn-primary {
-            background: #111827;
-            color: white;
-            border: 1px solid transparent;
-        }
+    .dot {
+      width: 6px; height: 6px;
+      background: var(--emerald-500);
+      border-radius: 50%;
+      animation: dotBounce 1.4s ease-in-out infinite;
+    }
 
-        .btn-primary:hover {
-            background: #000000;
-            transform: translateY(-1px);
-        }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
 
-        .btn-secondary {
-            background: white;
-            color: var(--text-primary);
-            border: 1px solid var(--border-color);
-        }
+    @keyframes dotBounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-8px); }
+    }
 
-        .btn-secondary:hover {
-            background: var(--card-bg);
-            border-color: #d1d5db;
-        }
+    .progress-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
 
-        /* Toast */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: #111827;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            pointer-events: none;
-        }
+    .progress-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--bg-glass);
+      border-radius: 100px;
+      overflow: hidden;
+    }
 
-        .toast.visible {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-    </style>
+    .progress-fill {
+      height: 100%;
+      background: var(--emerald-gradient);
+      border-radius: 100px;
+      transition: width 0.1s ease-out;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+      width: 0%;
+    }
+
+    .progress-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--emerald-400);
+      min-width: 36px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      opacity: 0.4;
+      transition: all 0.3s ease;
+    }
+
+    .step.active {
+      opacity: 1;
+      background: var(--bg-glass);
+      border-color: var(--emerald-500);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+    }
+
+    .step.complete { opacity: 0.7; }
+
+    .step-icon {
+      font-size: 18px;
+      width: 28px; height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-glass);
+      border-radius: 8px;
+    }
+
+    .step.complete .step-icon {
+      background: var(--emerald-gradient);
+      color: white;
+      font-size: 14px;
+    }
+
+    .step-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .step.active .step-label {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* Complete Section */
+    .complete-section {
+      text-align: center;
+      animation: fadeInUp 0.5s ease;
+      display: none;
+    }
+
+    .complete-section.visible { display: block; }
+    .loading-section.hidden { display: none; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .complete-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--emerald-gradient);
+      padding: 12px 24px;
+      border-radius: 100px;
+      margin-bottom: 24px;
+      box-shadow: 0 0 60px rgba(16, 185, 129, 0.3);
+    }
+
+    .complete-icon { font-size: 18px; font-weight: bold; }
+    .complete-text { font-size: 15px; font-weight: 600; color: white; }
+
+    .complete-message {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+
+    .complete-hint {
+      color: var(--emerald-400);
+      font-weight: 500;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: var(--bg-glass);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-value {
+      display: block;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--emerald-400);
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .widget-footer {
+      position: absolute;
+      bottom: 20px;
+      left: 0; right: 0;
+      text-align: center;
+    }
+
+    .footer-text {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+  </style>
 </head>
-
 <body>
-    <div class="container">
-        <!-- Header Badge -->
-        <div class="header-badge">
-            <span class="icon">📦</span>
-            <span class="label">Compressed Context</span>
-            <span class="stats" id="compression-stats">Loading stats...</span>
-        </div>
-
-        <!-- Hero Summary -->
-        <div class="hero-card">
-            <h1 class="summary" id="summary">Analyzing conversation...</h1>
-        </div>
-
-        <!-- Structured Data -->
-        <div class="sections-container">
-            <!-- Goals Section -->
-            <div class="section" id="goals-section">
-                <h2 class="section-header">Goals</h2>
-                <ul class="list" id="goals-list"></ul>
-            </div>
-
-            <!-- Decisions Section -->
-            <div class="section" id="decisions-section">
-                <h2 class="section-header">Key Decisions</h2>
-                <ul class="list" id="decisions-list"></ul>
-            </div>
-
-            <!-- Constraints Section -->
-            <div class="section" id="constraints-section">
-                <h2 class="section-header">Constraints</h2>
-                <ul class="list" id="constraints-list"></ul>
-            </div>
-
-            <!-- Open Questions Section -->
-            <div class="section" id="questions-section">
-                <h2 class="section-header">Open Questions</h2>
-                <ul class="list" id="questions-list"></ul>
-            </div>
-
-            <!-- Key Facts Section -->
-            <div class="section" id="facts-section">
-                <h2 class="section-header">Key Facts</h2>
-                <ul class="list" id="facts-list"></ul>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="actions">
-            <button class="btn btn-secondary" id="copy-btn">
-                <span>📋</span> Copy All
-            </button>
-            <button class="btn btn-primary" id="new-chat-btn">
-                <span>💬</span> Start New Chat <span style="opacity: 0.6">→</span>
-            </button>
-        </div>
-
-        <!-- Toast Notification -->
-        <div class="toast" id="toast">
-            <span id="toast-message">✓ Copied to clipboard</span>
-        </div>
+  <div class="widget-container">
+    <div class="bg-gradient"></div>
+    
+    <div class="brand-section">
+      <div class="logo-container" id="logoContainer">
+        <div class="logo-ring"></div>
+        <div class="logo-ring delay-1"></div>
+        <div class="logo-ring delay-2"></div>
+        <span class="logo-icon" id="logoIcon">📦</span>
+      </div>
+      <h1 class="brand-name">GPTCompress</h1>
+      <p class="brand-tagline">Intelligent Context Compression</p>
     </div>
 
-    <script>
-        // Data Handling
-        const defaultData = {
-            summary: "Conversation analysis pending. Please ensure the tool executed correctly.",
-            goal: ["Identify user intent"],
-            decisions: ["Waiting for input"],
-            constraints: ["None identified"],
-            open_questions: ["What is the primary objective?"],
-            key_facts: ["Session active"],
-            stats: "0 → 0 messages"
-        };
+    <div class="status-section">
+      <!-- Loading State -->
+      <div class="loading-section" id="loadingSection">
+        <div class="status-text">
+          <span class="status-label">Analyzing conversation</span>
+          <span class="status-dots">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </span>
+        </div>
+        
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <span class="progress-text" id="progressText">0%</span>
+        </div>
+        
+        <div class="steps">
+          <div class="step active" id="step1">
+            <span class="step-icon">📝</span>
+            <span class="step-label">Extracting insights</span>
+          </div>
+          <div class="step" id="step2">
+            <span class="step-icon">🎯</span>
+            <span class="step-label">Identifying goals</span>
+          </div>
+          <div class="step" id="step3">
+            <span class="step-icon">✨</span>
+            <span class="step-label">Generating summary</span>
+          </div>
+        </div>
+      </div>
 
-        function renderData(data) {
-            // Stats
-            if (data.stats) {
-                document.getElementById('compression-stats').textContent = data.stats;
-            }
+      <!-- Complete State -->
+      <div class="complete-section" id="completeSection">
+        <div class="complete-badge">
+          <span class="complete-icon">✓</span>
+          <span class="complete-text">Compression Complete</span>
+        </div>
+        
+        <p class="complete-message">
+          Your conversation has been intelligently compressed.
+          <br>
+          <span class="complete-hint">View the summary below ↓</span>
+        </p>
 
-            // Summary
-            if (data.summary) {
-                document.getElementById('summary').textContent = data.summary;
-            }
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value">85%</span>
+            <span class="stat-label">Tokens Saved</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">~5s</span>
+            <span class="stat-label">Time Saved</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-            // Lists
-            const sections = {
-                'goals-list': data.goal,
-                'decisions-list': data.decisions,
-                'constraints-list': data.constraints,
-                'questions-list': data.open_questions,
-                'facts-list': data.key_facts
-            };
+    <div class="widget-footer">
+      <span class="footer-text">Powered by GPTCompress</span>
+    </div>
+  </div>
 
-            for (const [id, items] of Object.entries(sections)) {
-                const listEl = document.getElementById(id);
-                if (listEl) {
-                    listEl.innerHTML = (items && items.length > 0)
-                        ? items.map(item => \`<li>\${item}</li>\`).join('')
-                        : '<li style="color: #9ca3af; font-style: italic;">None identified</li>';
-                }
-            }
-        }
+  <script>
+    let progress = 0;
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const step3 = document.getElementById('step3');
+    const loadingSection = document.getElementById('loadingSection');
+    const completeSection = document.getElementById('completeSection');
+    const logoContainer = document.getElementById('logoContainer');
+    const logoIcon = document.getElementById('logoIcon');
 
-        // Copy Function
-        function copyToClipboard() {
-            const data = window.currentData || defaultData;
+    function updateProgress() {
+      if (progress >= 100) {
+        showComplete();
+        return;
+      }
+      
+      const increment = progress < 70 ? 8 : progress < 90 ? 3 : 1;
+      progress = Math.min(progress + increment, 100);
+      
+      progressFill.style.width = progress + '%';
+      progressText.textContent = progress + '%';
+      
+      // Update steps
+      if (progress >= 40) {
+        step1.classList.remove('active');
+        step1.classList.add('complete');
+        step1.querySelector('.step-icon').textContent = '✓';
+        step2.classList.add('active');
+      }
+      if (progress >= 70) {
+        step2.classList.remove('active');
+        step2.classList.add('complete');
+        step2.querySelector('.step-icon').textContent = '✓';
+        step3.classList.add('active');
+      }
+      if (progress >= 100) {
+        step3.classList.remove('active');
+        step3.classList.add('complete');
+        step3.querySelector('.step-icon').textContent = '✓';
+      }
+      
+      setTimeout(updateProgress, 100);
+    }
 
-            let text = \`SUMMARY: \${data.summary}\\n\\n\`;
-            if (data.goal?.length) text += \`GOALS:\\n\${data.goal.map(i => '- ' + i).join('\\n')}\\n\\n\`;
-            if (data.decisions?.length) text += \`DECISIONS:\\n\${data.decisions.map(i => '- ' + i).join('\\n')}\\n\\n\`;
-            if (data.constraints?.length) text += \`CONSTRAINTS:\\n\${data.constraints.map(i => '- ' + i).join('\\n')}\\n\\n\`;
-            if (data.open_questions?.length) text += \`OPEN QUESTIONS:\\n\${data.open_questions.map(i => '- ' + i).join('\\n')}\\n\\n\`;
-            if (data.key_facts?.length) text += \`KEY FACTS:\\n\${data.key_facts.map(i => '- ' + i).join('\\n')}\`;
+    function showComplete() {
+      loadingSection.classList.add('hidden');
+      completeSection.classList.add('visible');
+      logoContainer.classList.add('complete');
+      logoIcon.textContent = '✓';
+    }
 
-            navigator.clipboard.writeText(text).then(() => {
-                const toast = document.getElementById('toast');
-                toast.classList.add('visible');
-                setTimeout(() => toast.classList.remove('visible'), 2000);
-            });
-        }
-
-        // New Chat Function
-        function startNewChat() {
-            // In a real app, this might trigger a window.openai action
-            // For now, we can clear the view or reload
-            window.open('https://chat.openai.com', '_blank');
-        }
-
-        // Init
-        window.addEventListener('load', () => {
-            // Mock Data for Preview
-            let data = {
-                stats: "42 → 5 messages",
-                summary: "Developed a comprehensive plan for building the GPTCompress Chrome Extension using the OpenAI Apps SDK.",
-                goal: ["Create a native-feeling UI widget", "Deploy to Railway"],
-                decisions: ["Use Inline display mode", "Merge premium styles into single file"],
-                constraints: ["Must be responsive", "No external dependencies if possible"],
-                open_questions: ["Does Railway require specific port config?"],
-                key_facts: ["Project root is e:\\\\Gptcompress"]
-            };
-
-            // Real Data Injection from OpenAI
-            if (window.openai && window.openai.toolOutput) {
-                const rawOutput = window.openai.toolOutput;
-                console.log('[Widget] Received toolOutput:', typeof rawOutput, rawOutput);
-
-                try {
-                    // Parse if it's a JSON string
-                    if (typeof rawOutput === 'string') {
-                        data = JSON.parse(rawOutput);
-                        console.log('[Widget] Parsed JSON data:', data);
-                    } else if (typeof rawOutput === 'object' && rawOutput !== null) {
-                        // Check if structuredContent exists (MCP response format)
-                        if (rawOutput.structuredContent) {
-                            data = rawOutput.structuredContent;
-                            console.log('[Widget] Using structuredContent:', data);
-                        } else {
-                            data = rawOutput;
-                            console.log('[Widget] Using object data:', data);
-                        }
-                    }
-                } catch (e) {
-                    console.error('[Widget] Failed to parse toolOutput:', e);
-                    // Keep mock data as fallback
-                }
-            }
-
-            window.currentData = data;
-            renderData(data);
-
-            // Listeners
-            document.getElementById('copy-btn').addEventListener('click', copyToClipboard);
-            document.getElementById('new-chat-btn').addEventListener('click', startNewChat);
-        });
-    </script>
+    // Start animation
+    setTimeout(updateProgress, 500);
+  </script>
 </body>
-
-</html>
-`;
+</html>`;
