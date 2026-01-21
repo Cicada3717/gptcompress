@@ -2,84 +2,165 @@ import { useToolOutput } from './hooks/useToolOutput';
 import './App.css';
 
 function App() {
-  const data = useToolOutput();
+  const { data, loading } = useToolOutput();
 
   const handleCopy = () => {
-    const text = `SUMMARY: ${data.summary}\n\nGOALS:\n${data.goal.map(i => '-' + i).join('\n')}\n\nDECISIONS:\n${data.decisions.map(i => '- ' + i).join('\n')}\n\nOPEN QUESTIONS:\n${data.open_questions.map(i => '- ' + i).join('\n')}\n\nCONSTRAINTS:\n${data.constraints.map(i => '- ' + i).join('\n')}\n\nKEY FACTS:\n${data.key_facts.map(i => '- ' + i).join('\n')}`;
+    if (!data) return;
+    const text = `📊 CONVERSATION ANALYSIS
 
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => {
-        alert('✓ Copied to clipboard');
-      });
-    }
+SUMMARY:
+${data.summary}
+
+🎯 GOALS:
+${data.goal.map(i => '• ' + i).join('\n')}
+
+✅ KEY DECISIONS:
+${data.decisions.map(i => '• ' + i).join('\n')}
+
+🔒 CONSTRAINTS:
+${data.constraints.map(i => '• ' + i).join('\n')}
+
+❓ OPEN QUESTIONS:
+${data.open_questions.map(i => '• ' + i).join('\n')}
+
+📌 KEY FACTS:
+${data.key_facts.map(i => '• ' + i).join('\n')}`;
+
+    navigator.clipboard?.writeText(text).then(() => {
+      const btn = document.getElementById('copy-btn');
+      if (btn) {
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => btn.textContent = 'Copy All', 2000);
+      }
+    });
   };
 
   const handleExpand = async () => {
-    if (window.openai) {
+    if (window.openai?.requestDisplayMode) {
       try {
         await window.openai.requestDisplayMode({ mode: "fullscreen" });
       } catch (e) {
-        console.error('Failed to request fullscreen:', e);
+        console.error('Fullscreen error:', e);
       }
     }
   };
 
-  const handleNewChat = () => {
-    window.open('https://chat.openai.com', '_blank');
-  };
+  if (loading) {
+    return (
+      <div className="widget-container loading-state">
+        <div className="pulse-loader">
+          <div className="pulse-ring"></div>
+          <span className="pulse-icon">📦</span>
+        </div>
+        <h2 className="loading-title">Analyzing Conversation</h2>
+        <p className="loading-subtitle">Extracting key insights...</p>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="widget-container error-state">
+        <span className="error-icon">⚠️</span>
+        <p>Unable to load compression data</p>
+      </div>
+    );
+  }
 
   return (
     <div className="widget-container">
-      {/* Header */}
-      <div className="header-row">
+      {/* Floating Header */}
+      <header className="header">
         <div className="header-badge">
-          <span className="icon">📦</span>
-          <span className="label">Compressed Context</span>
-          <span className="stats">{data.stats}</span>
+          <span className="badge-icon">📦</span>
+          <span className="badge-text">Compressed</span>
+          <span className="badge-stats">{data.stats}</span>
         </div>
         <button className="expand-btn" onClick={handleExpand}>
-          ⤢ Expand
+          <span>⤢</span>
         </button>
+      </header>
+
+      {/* Hero Summary Card */}
+      <section className="hero-card">
+        <div className="hero-glow"></div>
+        <h1 className="hero-title">Executive Summary</h1>
+        <p className="hero-text">{data.summary}</p>
+      </section>
+
+      {/* Insights Grid */}
+      <div className="insights-grid">
+        <InsightCard
+          icon="🎯"
+          title="Goals"
+          items={data.goal}
+          color="emerald"
+        />
+        <InsightCard
+          icon="✅"
+          title="Decisions"
+          items={data.decisions}
+          color="blue"
+        />
+        <InsightCard
+          icon="🔒"
+          title="Constraints"
+          items={data.constraints}
+          color="amber"
+        />
+        <InsightCard
+          icon="❓"
+          title="Open Questions"
+          items={data.open_questions}
+          color="gray"
+        />
+        <InsightCard
+          icon="📌"
+          title="Key Facts"
+          items={data.key_facts}
+          color="teal"
+          fullWidth
+        />
       </div>
 
-      {/* Hero Summary */}
-      <div className="hero-card">
-        <p className="summary-text">{data.summary}</p>
-      </div>
-
-      {/* Sections */}
-      <div className="sections">
-        <Section title="🎯 GOALS" items={data.goal} color="#059669" />
-        <Section title="✅ KEY DECISIONS" items={data.decisions} color="#2563eb" />
-        <Section title="🔒 CONSTRAINTS" items={data.constraints} color="#d97706" />
-        <Section title="❓ OPEN QUESTIONS" items={data.open_questions} color="#6b7280" />
-        <Section title="📌 KEY FACTS" items={data.key_facts} color="#059669" />
-      </div>
-
-      {/* Actions */}
-      <div className="actions">
-        <button className="btn btn-secondary" onClick={handleCopy}>
-          📋 Copy All
+      {/* Action Bar */}
+      <footer className="action-bar">
+        <button id="copy-btn" className="action-btn secondary" onClick={handleCopy}>
+          <span className="btn-icon">📋</span>
+          Copy All
         </button>
-        <button className="btn btn-primary" onClick={handleNewChat}>
-          💬 Start New Chat →
+        <button className="action-btn primary" onClick={() => window.open('https://chat.openai.com', '_blank')}>
+          <span className="btn-icon">💬</span>
+          New Chat
+          <span className="btn-arrow">→</span>
         </button>
-      </div>
+      </footer>
     </div>
   );
 }
 
-function Section({ title, items, color }) {
+function InsightCard({ icon, title, items, color, fullWidth }) {
+  const hasItems = items && items.length > 0;
+
   return (
-    <div className="section-card" style={{ borderLeftColor: color }}>
-      <h3 className="section-title" style={{ color }}>{title}</h3>
-      <ul className="section-list">
-        {items && items.length > 0 ? (
+    <div className={`insight-card ${color} ${fullWidth ? 'full-width' : ''}`}>
+      <div className="card-header">
+        <span className="card-icon">{icon}</span>
+        <h3 className="card-title">{title}</h3>
+        {hasItems && <span className="card-count">{items.length}</span>}
+      </div>
+      <ul className="card-list">
+        {hasItems ? (
           items.map((item, i) => (
-            <li key={i}>{item}</li>
+            <li key={i} className="card-item">
+              <span className="item-bullet"></span>
+              <span className="item-text">{item}</span>
+            </li>
           ))
         ) : (
-          <li className="empty">None identified</li>
+          <li className="card-item empty">
+            <span className="item-text">None identified</span>
+          </li>
         )}
       </ul>
     </div>
