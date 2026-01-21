@@ -309,6 +309,11 @@ async function handlePostMessage(
             writeHead: () => dummyRes,
             write: () => true,
             end: () => dummyRes,
+            on: () => dummyRes,
+            once: () => dummyRes,
+            emit: () => true,
+            removeListener: () => dummyRes,
+            setHeader: () => dummyRes,
         } as any;
 
         const transport = new SSEServerTransport('/mcp/messages', dummyRes);
