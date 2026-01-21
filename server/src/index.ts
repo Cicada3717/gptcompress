@@ -304,7 +304,14 @@ async function handlePostMessage(
 
         // For POST-only requests, we create a minimal transport
         // The SSEServerTransport will handle the POST message
-        const transport = new SSEServerTransport('/mcp/messages', res);
+        // USE DUMMY RESPONSE to prevent SSE headers being written to real res
+        const dummyRes = {
+            writeHead: () => dummyRes,
+            write: () => true,
+            end: () => dummyRes,
+        } as any;
+
+        const transport = new SSEServerTransport('/mcp/messages', dummyRes);
 
         // Store the session
         sessions.set(sessionId, {
