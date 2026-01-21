@@ -278,22 +278,53 @@ async function handlePostMessage(
     }
     res.setHeader('Access-Control-Allow-Headers', 'content-type');
 
-    const sessionId = url.searchParams.get('sessionId');
+    let sessionId = url.searchParams.get('sessionId');
 
     console.log('[POST] Session ID:', sessionId);
     console.log('[POST] Active sessions:', Array.from(sessions.keys()));
 
+    // FIX RACE CONDITION: If no sessionId or session not found, create one on-the-fly
     if (!sessionId) {
-        console.error('[POST] Missing sessionId');
-        res.writeHead(400).end('Missing sessionId query parameter');
-        return;
+        console.log('[POST] No sessionId provided, creating ephemeral session');
+        sessionId = `ephemeral-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     }
 
-    const session = sessions.get(sessionId);
+    let session = sessions.get(sessionId);
+
     if (!session) {
-        console.error('[POST] Session not found:', sessionId);
-        res.writeHead(404).end('Unknown session');
-        return;
+        console.log('[POST] Session not found, creating new session:', sessionId);
+
+        // Create a new server and transport for this request
+        const server = createMcpServer();
+
+        // For POST-only requests, we create a minimal transport
+        // The SSEServerTransport will handle the POST message
+        const transport = new SSEServerTransport('/mcp/messages', res);
+
+        // Store the session
+        sessions.set(sessionId, {
+            server,
+            transport,
+            lastActivity: Date.now()
+        });
+
+        session = sessions.get(sessionId)!;
+
+        // Connect the server
+        try {
+            await server.connect(transport);
+            console.log('[POST] Created ephemeral session:', sessionId);
+        } catch (error) {
+            console.error('[POST] Failed to create ephemeral session:', error);
+            sessions.delete(sessionId);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                error: 'Failed to create session',
+                message: 'Please retry the request',
+                retryable: true
+            }));
+            return;
+        }
     }
 
     // Update session activity
@@ -306,7 +337,12 @@ async function handlePostMessage(
     } catch (error) {
         console.error('[POST] Failed to process message:', error);
         if (!res.headersSent) {
-            res.writeHead(500).end('Failed to process message');
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                error: 'Failed to process message',
+                message: String(error),
+                retryable: true
+            }));
         }
     }
 }
