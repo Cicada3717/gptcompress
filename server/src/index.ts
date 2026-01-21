@@ -283,65 +283,34 @@ async function handlePostMessage(
     }
     res.setHeader('Access-Control-Allow-Headers', 'content-type');
 
-    let sessionId = url.searchParams.get('sessionId');
+    const sessionId = url.searchParams.get('sessionId');
 
     console.log('[POST] Session ID:', sessionId);
     console.log('[POST] Active sessions:', Array.from(sessions.keys()));
 
-    // FIX RACE CONDITION: If no sessionId or session not found, create one on-the-fly
+    // Require proper SSE connection - no ephemeral sessions
     if (!sessionId) {
-        console.log('[POST] No sessionId provided, creating ephemeral session');
-        sessionId = `ephemeral-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+        console.error('[POST] No sessionId provided - client must establish SSE connection first');
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            error: 'Missing sessionId',
+            message: 'Client must establish SSE connection at GET /mcp before sending POST requests',
+            retryable: false
+        }));
+        return;
     }
 
-    let session = sessions.get(sessionId);
+    const session = sessions.get(sessionId);
 
     if (!session) {
-        console.log('[POST] Session not found, creating new session:', sessionId);
-
-        // Create a new server and transport for this request
-        const server = createMcpServer();
-
-        // For POST-only requests, we create a minimal transport
-        // The SSEServerTransport will handle the POST message
-        // USE DUMMY RESPONSE to prevent SSE headers being written to real res
-        const dummyRes = {
-            writeHead: () => dummyRes,
-            write: () => true,
-            end: () => dummyRes,
-            on: () => dummyRes,
-            once: () => dummyRes,
-            emit: () => true,
-            removeListener: () => dummyRes,
-            setHeader: () => dummyRes,
-        } as any;
-
-        const transport = new SSEServerTransport('/mcp/messages', dummyRes);
-
-        // Store the session
-        sessions.set(sessionId, {
-            server,
-            transport,
-            lastActivity: Date.now()
-        });
-
-        session = sessions.get(sessionId)!;
-
-        // Connect the server
-        try {
-            await server.connect(transport);
-            console.log('[POST] Created ephemeral session:', sessionId);
-        } catch (error) {
-            console.error('[POST] Failed to create ephemeral session:', error);
-            sessions.delete(sessionId);
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({
-                error: 'Failed to create session',
-                message: 'Please retry the request',
-                retryable: true
-            }));
-            return;
-        }
+        console.error('[POST] Session not found:', sessionId);
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            error: 'Session not found',
+            message: 'Please establish SSE connection first',
+            retryable: false
+        }));
+        return;
     }
 
     // Update session activity
@@ -360,18 +329,6 @@ async function handlePostMessage(
                 message: String(error),
                 retryable: true
             }));
-        }
-    } finally {
-        // CLEANUP EPHEMERAL SESSIONS
-        // These are one-off requests, so we shouldn't keep the server instance alive
-        if (sessionId && sessionId.startsWith('ephemeral-')) {
-            console.log('[POST] Cleaning up ephemeral session:', sessionId);
-            sessions.delete(sessionId);
-            try {
-                await session?.server.close();
-            } catch (e) {
-                console.error('Error closing ephemeral server:', e);
-            }
         }
     }
 }
