@@ -1,168 +1,142 @@
-import { useToolOutput } from './hooks/useToolOutput';
+import { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
-  const { data, loading } = useToolOutput();
+  const [status, setStatus] = useState('loading'); // loading -> complete
+  const [progress, setProgress] = useState(0);
 
-  const handleCopy = () => {
-    if (!data) return;
-    const text = `📊 CONVERSATION ANALYSIS
+  useEffect(() => {
+    // Animate progress bar
+    const progressInterval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(progressInterval);
+          return 100;
+        }
+        // Fast at first, slow down near end
+        const increment = prev < 70 ? 8 : prev < 90 ? 3 : 1;
+        return Math.min(prev + increment, 100);
+      });
+    }, 100);
 
-SUMMARY:
-${data.summary}
+    // Transition to complete after progress reaches 100
+    const completeTimer = setTimeout(() => {
+      setStatus('complete');
+    }, 2000);
 
-🎯 GOALS:
-${data.goal.map(i => '• ' + i).join('\n')}
-
-✅ KEY DECISIONS:
-${data.decisions.map(i => '• ' + i).join('\n')}
-
-🔒 CONSTRAINTS:
-${data.constraints.map(i => '• ' + i).join('\n')}
-
-❓ OPEN QUESTIONS:
-${data.open_questions.map(i => '• ' + i).join('\n')}
-
-📌 KEY FACTS:
-${data.key_facts.map(i => '• ' + i).join('\n')}`;
-
-    navigator.clipboard?.writeText(text).then(() => {
-      const btn = document.getElementById('copy-btn');
-      if (btn) {
-        btn.textContent = '✓ Copied!';
-        setTimeout(() => btn.textContent = 'Copy All', 2000);
-      }
-    });
-  };
-
-  const handleExpand = async () => {
-    if (window.openai?.requestDisplayMode) {
-      try {
-        await window.openai.requestDisplayMode({ mode: "fullscreen" });
-      } catch (e) {
-        console.error('Fullscreen error:', e);
-      }
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="widget-container loading-state">
-        <div className="pulse-loader">
-          <div className="pulse-ring"></div>
-          <span className="pulse-icon">📦</span>
-        </div>
-        <h2 className="loading-title">Analyzing Conversation</h2>
-        <p className="loading-subtitle">Extracting key insights...</p>
-      </div>
-    );
-  }
-
-  if (!data) {
-    return (
-      <div className="widget-container error-state">
-        <span className="error-icon">⚠️</span>
-        <p>Unable to load compression data</p>
-      </div>
-    );
-  }
+    return () => {
+      clearInterval(progressInterval);
+      clearTimeout(completeTimer);
+    };
+  }, []);
 
   return (
     <div className="widget-container">
-      {/* Floating Header */}
-      <header className="header">
-        <div className="header-badge">
-          <span className="badge-icon">📦</span>
-          <span className="badge-text">Compressed</span>
-          <span className="badge-stats">{data.stats}</span>
+      {/* Animated background gradient */}
+      <div className="bg-gradient"></div>
+
+      {/* Logo and branding */}
+      <div className="brand-section">
+        <div className={`logo-container ${status}`}>
+          <div className="logo-ring"></div>
+          <div className="logo-ring delay-1"></div>
+          <div className="logo-ring delay-2"></div>
+          <span className="logo-icon">{status === 'complete' ? '✓' : '📦'}</span>
         </div>
-        <button className="expand-btn" onClick={handleExpand}>
-          <span>⤢</span>
-        </button>
-      </header>
 
-      {/* Hero Summary Card */}
-      <section className="hero-card">
-        <div className="hero-glow"></div>
-        <h1 className="hero-title">Executive Summary</h1>
-        <p className="hero-text">{data.summary}</p>
-      </section>
-
-      {/* Insights Grid */}
-      <div className="insights-grid">
-        <InsightCard
-          icon="🎯"
-          title="Goals"
-          items={data.goal}
-          color="emerald"
-        />
-        <InsightCard
-          icon="✅"
-          title="Decisions"
-          items={data.decisions}
-          color="blue"
-        />
-        <InsightCard
-          icon="🔒"
-          title="Constraints"
-          items={data.constraints}
-          color="amber"
-        />
-        <InsightCard
-          icon="❓"
-          title="Open Questions"
-          items={data.open_questions}
-          color="gray"
-        />
-        <InsightCard
-          icon="📌"
-          title="Key Facts"
-          items={data.key_facts}
-          color="teal"
-          fullWidth
-        />
+        <h1 className="brand-name">GPTCompress</h1>
+        <p className="brand-tagline">Intelligent Context Compression</p>
       </div>
 
-      {/* Action Bar */}
-      <footer className="action-bar">
-        <button id="copy-btn" className="action-btn secondary" onClick={handleCopy}>
-          <span className="btn-icon">📋</span>
-          Copy All
-        </button>
-        <button className="action-btn primary" onClick={() => window.open('https://chat.openai.com', '_blank')}>
-          <span className="btn-icon">💬</span>
-          New Chat
-          <span className="btn-arrow">→</span>
-        </button>
-      </footer>
+      {/* Status section */}
+      <div className="status-section">
+        {status === 'loading' ? (
+          <>
+            <div className="status-text">
+              <span className="status-label">Analyzing conversation</span>
+              <span className="status-dots">
+                <span className="dot"></span>
+                <span className="dot"></span>
+                <span className="dot"></span>
+              </span>
+            </div>
+
+            {/* Progress bar */}
+            <div className="progress-container">
+              <div className="progress-bar">
+                <div
+                  className="progress-fill"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+              <span className="progress-text">{progress}%</span>
+            </div>
+
+            {/* Steps indicator */}
+            <div className="steps">
+              <Step
+                icon="📝"
+                label="Extracting insights"
+                active={progress < 40}
+                complete={progress >= 40}
+              />
+              <Step
+                icon="🎯"
+                label="Identifying goals"
+                active={progress >= 40 && progress < 70}
+                complete={progress >= 70}
+              />
+              <Step
+                icon="✨"
+                label="Generating summary"
+                active={progress >= 70}
+                complete={progress >= 100}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="complete-section">
+            <div className="complete-badge">
+              <span className="complete-icon">✓</span>
+              <span className="complete-text">Compression Complete</span>
+            </div>
+
+            <p className="complete-message">
+              Your conversation has been intelligently compressed.
+              <br />
+              <span className="complete-hint">View the summary below ↓</span>
+            </p>
+
+            {/* Stats preview */}
+            <div className="stats-grid">
+              <div className="stat-card">
+                <span className="stat-value">85%</span>
+                <span className="stat-label">Tokens Saved</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-value">~5s</span>
+                <span className="stat-label">Time Saved</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="widget-footer">
+        <span className="footer-text">Powered by GPTCompress</span>
+      </div>
     </div>
   );
 }
 
-function InsightCard({ icon, title, items, color, fullWidth }) {
-  const hasItems = items && items.length > 0;
-
+function Step({ icon, label, active, complete }) {
   return (
-    <div className={`insight-card ${color} ${fullWidth ? 'full-width' : ''}`}>
-      <div className="card-header">
-        <span className="card-icon">{icon}</span>
-        <h3 className="card-title">{title}</h3>
-        {hasItems && <span className="card-count">{items.length}</span>}
-      </div>
-      <ul className="card-list">
-        {hasItems ? (
-          items.map((item, i) => (
-            <li key={i} className="card-item">
-              <span className="item-bullet"></span>
-              <span className="item-text">{item}</span>
-            </li>
-          ))
-        ) : (
-          <li className="card-item empty">
-            <span className="item-text">None identified</span>
-          </li>
-        )}
-      </ul>
+    <div className={`step ${active ? 'active' : ''} ${complete ? 'complete' : ''}`}>
+      <span className="step-icon">
+        {complete ? '✓' : icon}
+      </span>
+      <span className="step-label">{label}</span>
     </div>
   );
 }
