@@ -300,7 +300,6 @@ ${data.key_facts.length > 0 ? data.key_facts.map((f, i) => `${i + 1}. ${f}`).joi
                 text: reportOutput
             }],
             _meta: {
-                "openai/outputTemplate": "ui://compress/result.html",
                 "openai/toolInvocation/invoked": "Compression complete. Full analysis below:"
             }
         } as any; // Cast to allow structuredContent
