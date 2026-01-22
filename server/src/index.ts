@@ -301,18 +301,7 @@ ${data.key_facts.length > 0 ? data.key_facts.map((f, i) => `${i + 1}. ${f}`).joi
             }],
             _meta: {
                 "openai/outputTemplate": "ui://compress/result.html",
-                "openai/toolInvocation/invoked": "Compression complete. Full analysis below:",
-                "openai/presentationMode": "structured"
-            },
-            // Dual-mode output for visibility + machine readability
-            structuredContent: {
-                summary: data.summary,
-                goal: data.goal,
-                decisions: data.decisions,
-                open_questions: data.open_questions,
-                constraints: data.constraints,
-                key_facts: data.key_facts,
-                stats: `${optimizationResult.originalCount} → ${optimizationResult.optimizedCount} messages`
+                "openai/toolInvocation/invoked": "Compression complete. Full analysis below:"
             }
         } as any; // Cast to allow structuredContent
     });
@@ -611,17 +600,7 @@ ${data.key_facts.length > 0 ? data.key_facts.map((f, i) => `${i + 1}. ${f}`).joi
                         text: reportOutput
                     }],
                     _meta: {
-                        "openai/toolInvocation/invoked": "Compression complete. Full analysis below:",
-                        "openai/presentationMode": "structured"
-                    },
-                    structuredContent: {
-                        summary: data.summary,
-                        goal: data.goal,
-                        decisions: data.decisions,
-                        open_questions: data.open_questions,
-                        constraints: data.constraints,
-                        key_facts: data.key_facts,
-                        stats: `${optimizationResult.originalCount} → ${optimizationResult.optimizedCount} messages`
+                        "openai/toolInvocation/invoked": "Compression complete. Full analysis below:"
                     }
                 }
             }));
