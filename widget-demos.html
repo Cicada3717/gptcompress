@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPTCompress Widget Options - Interactive Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      background: #1a1a1a;
+      color: white;
+      padding: 40px 20px;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+    
+    .header h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    
+    .header p {
+      font-size: 16px;
+      color: rgba(255,255,255,0.6);
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+      gap: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .option {
+      background: #0a0a0a;
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 24px;
+      border-radius: 12px;
+    }
+    
+    .option-header {
+      margin-bottom: 20px;
+    }
+    
+    .option-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    
+    .option-desc {
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+    }
+    
+    .demo-area {
+      background: #000;
+      border: 1px solid rgba(255,255,255,0.06);
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Option 1: Insights Stream */
+    .insights-stream {
+      display: flex;
+      gap: 12px;
+      padding: 20px;
+      overflow: hidden;
+    }
+    
+    .insight-bubble {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 12px 16px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      white-space: nowrap;
+      animation: slideIn 0.5s ease forwards;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    
+    @keyframes slideIn {
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Option 2: Particle Compression */
+    .particle-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    
+    .particle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      animation: compress 2s ease-in-out infinite;
+    }
+    
+    @keyframes compress {
+      0%, 100% { transform: scale(1); opacity: 0.3; }
+      50% { transform: scale(0.5) translate(var(--tx), var(--ty)); opacity: 1; }
+    }
+
+    /* Option 3: Analysis Stages */
+    .stages-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 20px;
+      width: 100%;
+    }
+    
+    .stage {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 6px;
+      opacity: 0.3;
+      transition: all 0.4s ease;
+    }
+    
+    .stage.active {
+      opacity: 1;
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.3);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+    }
+    
+    .stage.complete {
+      opacity: 0.6;
+      border-color: #10b981;
+    }
+    
+    .stage-icon {
+      font-size: 16px;
+    }
+    
+    .stage-text {
+      font-size: 13px;
+      flex: 1;
+    }
+    
+    .stage-spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top-color: #10b981;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Option 4: Morphing Logo */
+    .logo-morph {
+      font-size: 64px;
+      animation: morph 3s ease-in-out infinite;
+    }
+    
+    @keyframes morph {
+      0% { transform: scale(1) rotate(0deg); }
+      25% { transform: scale(1.2) rotate(90deg); }
+      50% { transform: scale(0.8) rotate(180deg); }
+      75% { transform: scale(1.1) rotate(270deg); }
+      100% { transform: scale(1) rotate(360deg); }
+    }
+
+    /* Option 5: Compression Graph */
+    .graph-container {
+      padding: 20px;
+      width: 100%;
+    }
+    
+    .graph {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 100px;
+      margin-bottom: 12px;
+    }
+    
+    .bar {
+      flex: 1;
+      background: linear-gradient(to top, #10b981, #34d399);
+      border-radius: 4px 4px 0 0;
+      animation: growBar 1s ease-out forwards;
+      transform-origin: bottom;
+      transform: scaleY(0);
+    }
+    
+    @keyframes growBar {
+      to { transform: scaleY(1); }
+    }
+    
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    /* Option 6: Typing Effect */
+    .typing-container {
+      padding: 20px;
+      font-family: 'SF Mono', 'Monaco', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.8);
+    }
+    
+    .typed-text::after {
+      content: '|';
+      animation: blink 1s infinite;
+    }
+    
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>GPTCompress Widget Options</h1>
+    <p>Interactive demos - See how each option looks and feels</p>
+  </div>
+
+  <div class="grid">
+    <!-- Option 1: Insights Stream -->
+    <div class="option">
+      <div class="option-header">
+        <div class="option-title">Option 1: Compression Insights Stream</div>
+        <div class="option-desc">Real-time insights flowing across the screen</div>
+      </div>
+      <div class="demo-area">
+        <div class="insights-stream" id="insights1"></div>
+      </div>
+    </div>
+
+    <!-- Option 2: Particle Compression -->
+    <div class="option">
+      <div class="option-header">
+        <div class="option-title">Option 2: Particle Compression Effect</div>
+        <div class="option-desc">Mesmerizing particles condensing</div>
+      </div>
+      <div class="demo-area">
+        <div class="particle-container" id="particles"></div>
+      </div>
+    </div>
+
+    <!-- Option 3: Analysis Stages -->
+    <div class="option">
+      <div class="option-header">
+        <div class="option-title">Option 3: Smart Analysis Stages ⭐</div>
+        <div class="option-desc">Show AI thinking process step-by-step</div>
+      </div>
+      <div class="demo-area">
+        <div class="stages-container" id="stages">
+          <div class="stage">
+            <span class="stage-icon">📖</span>
+            <span class="stage-text">Reading conversation</span>
+            <div class="stage-spinner"></div>
+          </div>
+          <div class="stage">
+            <span class="stage-icon">🧠</span>
+            <span class="stage-text">Analyzing context</span>
+          </div>
+          <div class="stage">
+            <span class="stage-icon">🔍</span>
+            <span class="stage-text">Extracting patterns</span>
+          </div>
+          <div class="stage">
+            <span class="stage-icon">📦</span>
+            <span class="stage-text">Compressing output</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Option 4: Morphing Logo -->
+    <div class="option">
+      <div class="option-header">
+        <div class="option-title">Option 4: Morphing Logo Animation</div>
+        <div class="option-desc">Hypnotic logo transformations</div>
+      </div>
+      <div class="demo-area">
+        <div class="logo-morph" id="logo">📦</div>
+      </div>
+    </div>
+
+    <!-- Option 5: Compression Graph -->
+    <div class="option">
+      <div class="option-header">
+        <div class="option-title">Option 5: Interactive Compression Graph</div>
+        <div class="option-desc">Live data visualization</div>
+      </div>
+      <div class="demo-area">
+        <div class="graph-container">
+          <div class="graph" id="graph"></div>
+          <div class="stats">
+            <span>Before: 1,247 tokens</span>
+            <span style="color: #10b981;">After: 125 tokens</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Option 6: Typing Effect -->
+    <div class="option">
+      <div class="option-header">
+        <div class="option-title">Option 6: Typing Effect Summary Preview</div>
+        <div class="option-desc">Preview results as they're generated</div>
+      </div>
+      <div class="demo-area">
+        <div class="typing-container">
+          <div class="typed-text" id="typed"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Option 1: Insights Stream
+    const insights = [
+      '📝 Extracting key points',
+      '🎯 Identifying goals',
+      '💡 Finding patterns',
+      '✨ Optimizing structure'
+    ];
+    let insightIdx = 0;
+    function showInsight() {
+      const container = document.getElementById('insights1');
+      if (insightIdx < insights.length) {
+        const bubble = document.createElement('div');
+        bubble.className = 'insight-bubble';
+        bubble.style.animationDelay = insightIdx * 0.3 + 's';
+        bubble.textContent = insights[insightIdx];
+        container.appendChild(bubble);
+        insightIdx++;
+        setTimeout(showInsight, 800);
+      }
+    }
+    showInsight();
+
+    // Option 2: Particles
+    const particleContainer = document.getElementById('particles');
+    for (let i = 0; i < 20; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = Math.random() * 100 + '%';
+      particle.style.top = Math.random() * 100 + '%';
+      particle.style.setProperty('--tx', (50 - Math.random() * 100) + 'px');
+      particle.style.setProperty('--ty', (50 - Math.random() * 100) + 'px');
+      particle.style.animationDelay = Math.random() * 2 + 's';
+      particleContainer.appendChild(particle);
+    }
+
+    // Option 3: Stages
+    const stages = document.querySelectorAll('.stage');
+    let currentStage = 0;
+    function progressStages() {
+      if (currentStage > 0) {
+        stages[currentStage - 1].classList.remove('active');
+        stages[currentStage - 1].classList.add('complete');
+        stages[currentStage - 1].querySelector('.stage-spinner')?.remove();
+        const check = document.createElement('span');
+        check.textContent = '✓';
+        check.style.color = '#10b981';
+        stages[currentStage - 1].appendChild(check);
+      }
+      if (currentStage < stages.length) {
+        stages[currentStage].classList.add('active');
+        currentStage++;
+        setTimeout(progressStages, 2000);
+      }
+    }
+    setTimeout(progressStages, 500);
+
+    // Option 4: Logo Morph
+    const logos = ['📦', '⚙️', '🔄', '💎', '✓'];
+    let logoIdx = 0;
+    setInterval(() => {
+      document.getElementById('logo').textContent = logos[logoIdx % logos.length];
+      logoIdx++;
+    }, 600);
+
+    // Option 5: Graph
+    const graph = document.getElementById('graph');
+    for (let i = 0; i < 10; i++) {
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      bar.style.height = (30 + Math.random() * 70) + '%';
+      bar.style.animationDelay = i * 0.1 + 's';
+      graph.appendChild(bar);
+    }
+
+    // Option 6: Typing
+    const text = "Your goal: Create a skincare routine...\nKey decision: Focus on hydration...";
+    let charIdx = 0;
+    const typed = document.getElementById('typed');
+    function type() {
+      if (charIdx < text.length) {
+        typed.textContent = text.substring(0, charIdx + 1);
+        charIdx++;
+        setTimeout(type, 50);
+      }
+    }
+    setTimeout(type, 500);
+  </script>
+</body>
+</html>

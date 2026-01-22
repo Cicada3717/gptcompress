@@ -1,4 +1,5 @@
-// Premium Apple-level widget - sharp, minimal, sophisticated
+// Premium engaging widget - Particles + Centered Stages
+// Syncs with actual compression completion
 
 export const WIDGET_HTML = `<!DOCTYPE html>
 <html lang="en">
@@ -10,20 +11,14 @@ export const WIDGET_HTML = `<!DOCTYPE html>
     :root {
       --emerald: #10b981;
       --emerald-bright: #34d399;
-      --bg-dark: #000000;
-      --bg-surface: #0a0a0a;
-      --text-primary: #ffffff;
-      --text-secondary: rgba(255, 255, 255, 0.6);
-      --border: rgba(255, 255, 255, 0.06);
-      --shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-      background: var(--bg-dark);
-      color: var(--text-primary);
+      background: #000;
+      color: white;
       -webkit-font-smoothing: antialiased;
       height: 100vh;
       overflow: hidden;
@@ -32,217 +27,247 @@ export const WIDGET_HTML = `<!DOCTYPE html>
     .widget {
       width: 100%;
       height: 200px;
-      padding: 32px 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: linear-gradient(to bottom, var(--bg-surface), var(--bg-dark));
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-
-    /* Left side - Branding */
-    .brand-section {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .icon-box {
-      width: 48px;
-      height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.2);
       position: relative;
       overflow: hidden;
-    }
-
-    .icon-box::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), transparent);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .icon-box.complete::before {
-      opacity: 1;
-    }
-
-    .icon-char {
-      font-size: 24px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .brand-text {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .app-name {
-      font-size: 16px;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-      color: var(--text-primary);
-    }
-
-    .app-subtitle {
-      font-size: 12px;
-      font-weight: 400;
-      color: var(--text-secondary);
-      letter-spacing: 0.01em;
-    }
-
-    /* Right side - Status */
-    .status-section {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .status-indicator {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      transition: all 0.3s ease;
-    }
-
-    .status-indicator.complete {
-      color: var(--emerald-bright);
-      border-color: rgba(16, 185, 129, 0.3);
-      background: rgba(16, 185, 129, 0.05);
-    }
-
-    .spinner {
-      width: 12px;
-      height: 12px;
-      border: 2px solid rgba(255,255,255,0.1);
-      border-top-color: var(--emerald);
-      border-radius: 50%;
-      animation: rotate 0.6s linear infinite;
-    }
-
-    @keyframes rotate {
-      to { transform: rotate(360deg); }
-    }
-
-    .check {
-      width: 12px;
-      height: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
+      border-radius: 16px;
+    }
+
+    /* Particle Background */
+    .particle-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .particle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: var(--emerald);
+      border-radius: 50%;
+      opacity: 0.3;
+      filter: blur(0.5px);
+      animation: swirl 5s ease-in-out infinite;
+    }
+
+    @keyframes swirl {
+      0% { 
+        transform: translate(var(--start-x), var(--start-y)) rotate(0deg);
+        opacity: 0.15;
+      }
+      50% { 
+        transform: translate(var(--mid-x), var(--mid-y)) rotate(180deg);
+        opacity: 0.5;
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+      }
+      100% { 
+        transform: translate(var(--end-x), var(--end-y)) rotate(360deg);
+        opacity: 0.15;
+      }
+    }
+
+    /* Centered Stage Container */
+    .stage-container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .stage-card {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 24px;
+      background: rgba(10, 10, 10, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.92);
+      transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .stage-card.visible {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+      border-color: rgba(16, 185, 129, 0.35);
+      background: rgba(16, 185, 129, 0.08);
+      box-shadow: 0 8px 32px rgba(16, 185, 129, 0.18);
+    }
+
+    .stage-card.exit {
+      opacity: 0;
+      transform: translate(-50%, -60%) scale(0.92);
+      transition: all 0.4s cubic-bezier(0.4, 0, 1, 1);
+    }
+
+    .stage-card.complete {
+      border-color: rgba(16, 185, 129, 0.5);
+      background: rgba(16, 185, 129, 0.12);
+    }
+
+    .stage-icon {
+      font-size: 26px;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(16, 185, 129, 0.12);
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    .stage-text {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.95);
+    }
+
+    .stage-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2.5px solid rgba(255,255,255,0.12);
+      border-top-color: var(--emerald-bright);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      flex-shrink: 0;
+    }
+
+    .stage-check {
+      font-size: 18px;
       color: var(--emerald-bright);
-      font-size: 10px;
       font-weight: bold;
     }
 
-    /* Progress bar */
-    .progress-bar {
-      width: 160px;
-      height: 2px;
-      background: rgba(255, 255, 255, 0.05);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      position: absolute;
-      left: 0;
-      top: 0;
-      height: 100%;
-      background: var(--emerald);
-      width: 0%;
-      transition: width 0.3s ease;
-      box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
-    }
-
-    .progress-bar.complete .progress-fill {
-      width: 100%;
-    }
-
-    .progress-bar.hidden {
-      opacity: 0;
-    }
-
-    /* Subtle accent line */
-    .accent-line {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 1px;
-      background: linear-gradient(to right, transparent, var(--emerald), transparent);
-      opacity: 0;
-      transition: opacity 0.5s ease;
-    }
-
-    .accent-line.visible {
-      opacity: 0.3;
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
   </style>
 </head>
 <body>
   <div class="widget">
-    <div class="brand-section">
-      <div class="icon-box" id="iconBox">
-        <span class="icon-char" id="iconChar">📦</span>
+    <div class="particle-layer" id="particleLayer"></div>
+    
+    <div class="stage-container">
+      <div class="stage-card" id="stage0">
+        <div class="stage-icon">📖</div>
+        <div class="stage-text">Reading conversation</div>
+        <div class="stage-spinner"></div>
       </div>
-      <div class="brand-text">
-        <div class="app-name">GPTCompress</div>
-        <div class="app-subtitle">Context Compression</div>
+      <div class="stage-card" id="stage1">
+        <div class="stage-icon">🧠</div>
+        <div class="stage-text">Analyzing context</div>
+        <div class="stage-spinner"></div>
+      </div>
+      <div class="stage-card" id="stage2">
+        <div class="stage-icon">🔍</div>
+        <div class="stage-text">Extracting patterns</div>
+        <div class="stage-spinner"></div>
+      </div>
+      <div class="stage-card" id="stage3">
+        <div class="stage-icon">📦</div>
+        <div class="stage-text">Compressing output</div>
+        <div class="stage-spinner"></div>
+      </div>
+      <div class="stage-card" id="stageComplete">
+        <div class="stage-icon">✓</div>
+        <div class="stage-text">Compression Complete</div>
+        <div class="stage-check">✓</div>
       </div>
     </div>
-
-    <div class="status-section">
-      <div class="progress-bar" id="progressBar">
-        <div class="progress-fill" id="progressFill"></div>
-      </div>
-      <div class="status-indicator" id="statusIndicator">
-        <div class="spinner" id="spinner"></div>
-        <span id="statusText">Compressing</span>
-      </div>
-    </div>
-
-    <div class="accent-line" id="accentLine"></div>
   </div>
 
   <script>
-    const iconBox = document.getElementById('iconBox');
-    const iconChar = document.getElementById('iconChar');
-    const statusIndicator = document.getElementById('statusIndicator');
-    const statusText = document.getElementById('statusText');
-    const spinner = document.getElementById('spinner');
-    const progressBar = document.getElementById('progressBar');
-    const progressFill = document.getElementById('progressFill');
-    const accentLine = document.getElementById('accentLine');
-
-    let progress = 0;
+    const particleLayer = document.getElementById('particleLayer');
+    const stages = [
+      document.getElementById('stage0'),
+      document.getElementById('stage1'),
+      document.getElementById('stage2'),
+      document.getElementById('stage3')
+    ];
+    const completeStage = document.getElementById('stageComplete');
+    
+    let currentStage = 0;
+    let isComplete = false;
     let checkCount = 0;
-    const MAX_CHECKS = 60;
+    const MAX_CHECKS = 100; // 50 seconds max
 
-    function animateProgress() {
-      if (progress < 90) {
-        progress += Math.random() * 5;
-        progressFill.style.width = Math.min(progress, 90) + '%';
-        setTimeout(animateProgress, 400);
+    // Create particles
+    function initParticles() {
+      const count = 30;
+      for (let i = 0; i < count; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        
+        const startX = Math.random() * 700 - 350;
+        const startY = Math.random() * 180 - 90;
+        const midX = Math.random() * 500 - 250;
+        const midY = Math.random() * 120 - 60;
+        const endX = Math.random() * 300 - 150;
+        const endY = Math.random() * 80 - 40;
+        
+        particle.style.setProperty('--start-x', startX + 'px');
+        particle.style.setProperty('--start-y', startY + 'px');
+        particle.style.setProperty('--mid-x', midX + 'px');
+        particle.style.setProperty('--mid-y', midY + 'px');
+        particle.style.setProperty('--end-x', endX + 'px');
+        particle.style.setProperty('--end-y', endY + 'px');
+        
+        particle.style.animationDelay = (Math.random() * 3) + 's';
+        particle.style.left = '50%';
+        particle.style.top = '50%';
+        
+        particleLayer.appendChild(particle);
       }
     }
 
+    // Show specific stage
+    function showStage(index) {
+      if (index >= 0 && index < stages.length) {
+        stages[index].classList.add('visible');
+      }
+    }
+
+    // Hide stage with exit animation
+    function hideStage(index) {
+      if (index >= 0 && index < stages.length) {
+        stages[index].classList.remove('visible');
+        stages[index].classList.add('exit');
+      }
+    }
+
+    // Progress to next stage
+    function progressStage() {
+      if (isComplete) return;
+      
+      if (currentStage > 0) {
+        hideStage(currentStage - 1);
+      }
+      
+      if (currentStage < stages.length) {
+        setTimeout(() => {
+          showStage(currentStage);
+          currentStage++;
+        }, currentStage === 0 ? 0 : 300);
+      }
+    }
+
+    // Check for compression completion
     function checkCompletion() {
+      if (isComplete) return;
+      
       checkCount++;
       
       const hasData = window.openai?.toolOutput && 
@@ -255,36 +280,46 @@ export const WIDGET_HTML = `<!DOCTYPE html>
         return;
       }
       
+      // Continue checking
       setTimeout(checkCompletion, 500);
     }
 
+    // Show completion state
     function showComplete() {
-      // Complete progress
-      progressFill.style.width = '100%';
-      progressBar.classList.add('complete');
+      if (isComplete) return;
+      isComplete = true;
       
+      // Hide current stage
+      if (currentStage > 0) {
+        hideStage(currentStage - 1);
+      }
+      
+      // Show complete stage
       setTimeout(() => {
-        progressBar.classList.add('hidden');
-        
-        // Update icon
-        iconBox.classList.add('complete');
-        iconChar.textContent = '✓';
-        
-        // Update status
-        spinner.style.display = 'none';
-        statusIndicator.classList.add('complete');
-        statusIndicator.innerHTML = '<div class="check">✓</div><span>Complete</span>';
-        
-        // Show accent
-        accentLine.classList.add('visible');
-      }, 400);
+        completeStage.classList.add('visible', 'complete');
+      }, 300);
     }
 
-    // Start
+    // Stage progression timing (slower, ~4 seconds per stage)
+    function startStageProgression() {
+      showStage(0);
+      currentStage = 1;
+      
+      const stageInterval = setInterval(() => {
+        if (isComplete || currentStage >= stages.length) {
+          clearInterval(stageInterval);
+          return;
+        }
+        progressStage();
+      }, 4000); // 4 seconds per stage
+    }
+
+    // Initialize
+    initParticles();
     setTimeout(() => {
-      animateProgress();
+      startStageProgression();
       checkCompletion();
-    }, 300);
+    }, 400);
   </script>
 </body>
 </html>`;

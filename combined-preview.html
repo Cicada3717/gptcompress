@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combined Widget Preview - Centered Stages</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: #1a1a1a;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .preview-container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 24px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 40px;
+        }
+
+        .widget-demo {
+            background: #000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            height: 200px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Particle Background Layer */
+        .particle-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #10b981;
+            border-radius: 50%;
+            opacity: 0.4;
+            filter: blur(0.5px);
+        }
+
+        .particle.active {
+            animation: swirl 4s ease-in-out infinite;
+        }
+
+        @keyframes swirl {
+            0% {
+                transform: translate(var(--start-x), var(--start-y)) rotate(0deg);
+                opacity: 0.2;
+            }
+
+            50% {
+                transform: translate(var(--mid-x), var(--mid-y)) rotate(180deg);
+                opacity: 0.6;
+                box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+            }
+
+            100% {
+                transform: translate(var(--end-x), var(--end-y)) rotate(360deg);
+                opacity: 0.2;
+            }
+        }
+
+        /* Center Stage Container */
+        .stage-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 400px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Single Stage Item (all stages occupy same space) */
+        .stage-item {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 24px;
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 360px;
+            opacity: 0;
+            transform: scale(0.9);
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .stage-item.visible {
+            opacity: 1;
+            transform: scale(1);
+            border-color: rgba(16, 185, 129, 0.4);
+            background: rgba(16, 185, 129, 0.08);
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.2);
+        }
+
+        .stage-item.exit {
+            opacity: 0;
+            transform: scale(0.9) translateY(-20px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 1, 1);
+        }
+
+        .stage-icon {
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(16, 185, 129, 0.15);
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+
+        .stage-text {
+            flex: 1;
+            font-size: 15px;
+            font-weight: 600;
+            text-align: left;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .stage-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-top-color: #10b981;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        button {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: rgba(16, 185, 129, 0.25);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="preview-container">
+        <h1 class="title">Combined Widget Preview</h1>
+        <p class="subtitle">Particles (Background) + Centered Stages (One at a time)</p>
+
+        <div class="widget-demo">
+            <!-- Particle Background -->
+            <div class="particle-layer" id="particleLayer"></div>
+
+            <!-- Centered Stage Container -->
+            <div class="stage-container" id="stageContainer">
+                <!-- All stages in same position, only one visible at a time -->
+                <div class="stage-item" data-index="0">
+                    <div class="stage-icon">📖</div>
+                    <div class="stage-text">Reading conversation</div>
+                    <div class="stage-spinner"></div>
+                </div>
+                <div class="stage-item" data-index="1">
+                    <div class="stage-icon">🧠</div>
+                    <div class="stage-text">Analyzing context</div>
+                    <div class="stage-spinner"></div>
+                </div>
+                <div class="stage-item" data-index="2">
+                    <div class="stage-icon">🔍</div>
+                    <div class="stage-text">Extracting patterns</div>
+                    <div class="stage-spinner"></div>
+                </div>
+                <div class="stage-item" data-index="3">
+                    <div class="stage-icon">📦</div>
+                    <div class="stage-text">Compressing output</div>
+                    <div class="stage-spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="restartAnimation()">▶ Restart Animation</button>
+        </div>
+    </div>
+
+    <script>
+        const particleLayer = document.getElementById('particleLayer');
+        const stages = document.querySelectorAll('.stage-item');
+        let currentStageIndex = 0;
+        let stageInterval;
+
+        // Create particles
+        function createParticles() {
+            particleLayer.innerHTML = '';
+            const particleCount = 35;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+
+                // Random swirling paths
+                const startX = Math.random() * 800 - 400;
+                const startY = Math.random() * 200 - 100;
+                const midX = Math.random() * 600 - 300;
+                const midY = Math.random() * 150 - 75;
+                const endX = Math.random() * 400 - 200;
+                const endY = Math.random() * 100 - 50;
+
+                particle.style.setProperty('--start-x', startX + 'px');
+                particle.style.setProperty('--start-y', startY + 'px');
+                particle.style.setProperty('--mid-x', midX + 'px');
+                particle.style.setProperty('--mid-y', midY + 'px');
+                particle.style.setProperty('--end-x', endX + 'px');
+                particle.style.setProperty('--end-y', endY + 'px');
+
+                particle.style.animationDelay = (Math.random() * 2) + 's';
+                particle.style.left = '50%';
+                particle.style.top = '50%';
+
+                particleLayer.appendChild(particle);
+            }
+
+            // Activate particles
+            setTimeout(() => {
+                document.querySelectorAll('.particle').forEach(p => p.classList.add('active'));
+            }, 100);
+        }
+
+        // Show stages one at a time
+        function animateStages() {
+            // Reset all stages
+            stages.forEach(stage => {
+                stage.classList.remove('visible', 'exit');
+            });
+            currentStageIndex = 0;
+
+            // Show first stage
+            showStage(currentStageIndex);
+
+            // Cycle through stages
+            stageInterval = setInterval(() => {
+                // Exit current stage
+                stages[currentStageIndex].classList.remove('visible');
+                stages[currentStageIndex].classList.add('exit');
+
+                currentStageIndex++;
+
+                if (currentStageIndex < stages.length) {
+                    // Show next stage after exit animation
+                    setTimeout(() => {
+                        showStage(currentStageIndex);
+                    }, 200);
+                } else {
+                    clearInterval(stageInterval);
+                }
+            }, 2500);
+        }
+
+        function showStage(index) {
+            stages[index].classList.remove('exit');
+            stages[index].classList.add('visible');
+        }
+
+        function restartAnimation() {
+            clearInterval(stageInterval);
+            createParticles();
+            animateStages();
+        }
+
+        // Start on load
+        window.addEventListener('load', () => {
+            restartAnimation();
+        });
+    </script>
+</body>
+
+</html>
