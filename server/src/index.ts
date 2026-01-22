@@ -280,14 +280,6 @@ ${data.key_facts.length > 0 ? data.key_facts.map((f, i) => `${i + 1}. ${f}`).joi
 
 ---
 
-## Compression Performance
-
-| Metric | Value | Details |
-|--------|-------|---------|
-| **Original Conversation** | ${optimizationResult.originalCount} msgs | Full context |
-| **Compressed Output** | ${optimizationResult.optimizedCount} msgs | Optimized context |
-| **Token Usage** | ${compressionResult.tokensUsed} | Total tokens required |
-| **Efficiency Estimate** | ${optimizationResult.tokensEstimate.savedPercent}% | Estimated savings |
 
 ---
 
@@ -575,14 +567,6 @@ ${data.key_facts.length > 0 ? data.key_facts.map((f, i) => `${i + 1}. ${f}`).joi
 
 ---
 
-## Compression Performance
-
-| Metric | Value | Details |
-|--------|-------|---------|
-| **Original Conversation** | ${optimizationResult.originalCount} msgs | Full context |
-| **Compressed Output** | ${optimizationResult.optimizedCount} msgs | Optimized context |
-| **Token Usage** | ${compressionResult.tokensUsed} | Total tokens required |
-| **Efficiency Estimate** | ${optimizationResult.tokensEstimate.savedPercent}% | Estimated savings |
 
 ---
 
