@@ -1,4 +1,4 @@
-// Premium engaging widget - Particles + Centered Stages
+// Premium engaging widget - Particles + Centered Stages + Blended Branding
 // Syncs with actual compression completion
 
 export const WIDGET_HTML = `<!DOCTYPE html>
@@ -67,6 +67,33 @@ export const WIDGET_HTML = `<!DOCTYPE html>
         transform: translate(var(--end-x), var(--end-y)) rotate(360deg);
         opacity: 0.15;
       }
+    }
+
+    /* Blended Branding */
+    .brand-watermark {
+      position: absolute;
+      top: 16px;
+      left: 20px;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.5;
+      transition: opacity 0.3s ease;
+    }
+
+    .brand-logo-img {
+      width: 20px;
+      height: 20px;
+      opacity: 0.7;
+    }
+
+    .brand-name-text {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--emerald-bright);
+      opacity: 0.8;
     }
 
     /* Centered Stage Container */
@@ -154,11 +181,33 @@ export const WIDGET_HTML = `<!DOCTYPE html>
       to { transform: rotate(360deg); }
     }
 
+    /* Bottom Branding Tag */
+    .brand-footer {
+      position: absolute;
+      bottom: 12px;
+      right: 20px;
+      z-index: 2;
+      font-size: 10px;
+      color: var(--emerald);
+      opacity: 0.3;
+      letter-spacing: 0.08em;
+      font-weight: 500;
+    }
+
   </style>
 </head>
 <body>
   <div class="widget">
     <div class="particle-layer" id="particleLayer"></div>
+    
+    <!-- Blended Branding -->
+    <div class="brand-watermark">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="brand-logo-img">
+        <rect x="4" y="6" width="16" height="12" rx="2" stroke="#10b981" stroke-width="2"/>
+        <path d="M8 10h8M8 14h5" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span class="brand-name-text">GPTCompress</span>
+    </div>
     
     <div class="stage-container">
       <div class="stage-card" id="stage0">
@@ -187,6 +236,8 @@ export const WIDGET_HTML = `<!DOCTYPE html>
         <div class="stage-check">✓</div>
       </div>
     </div>
+
+    <div class="brand-footer">GPTCOMPRESS</div>
   </div>
 
   <script>
@@ -202,9 +253,8 @@ export const WIDGET_HTML = `<!DOCTYPE html>
     let currentStage = 0;
     let isComplete = false;
     let checkCount = 0;
-    const MAX_CHECKS = 100; // 50 seconds max
+    const MAX_CHECKS = 100;
 
-    // Create particles
     function initParticles() {
       const count = 30;
       for (let i = 0; i < count; i++) {
@@ -233,14 +283,12 @@ export const WIDGET_HTML = `<!DOCTYPE html>
       }
     }
 
-    // Show specific stage
     function showStage(index) {
       if (index >= 0 && index < stages.length) {
         stages[index].classList.add('visible');
       }
     }
 
-    // Hide stage with exit animation
     function hideStage(index) {
       if (index >= 0 && index < stages.length) {
         stages[index].classList.remove('visible');
@@ -248,7 +296,6 @@ export const WIDGET_HTML = `<!DOCTYPE html>
       }
     }
 
-    // Progress to next stage
     function progressStage() {
       if (isComplete) return;
       
@@ -264,7 +311,6 @@ export const WIDGET_HTML = `<!DOCTYPE html>
       }
     }
 
-    // Check for compression completion
     function checkCompletion() {
       if (isComplete) return;
       
@@ -280,27 +326,22 @@ export const WIDGET_HTML = `<!DOCTYPE html>
         return;
       }
       
-      // Continue checking
       setTimeout(checkCompletion, 500);
     }
 
-    // Show completion state
     function showComplete() {
       if (isComplete) return;
       isComplete = true;
       
-      // Hide current stage
       if (currentStage > 0) {
         hideStage(currentStage - 1);
       }
       
-      // Show complete stage
       setTimeout(() => {
         completeStage.classList.add('visible', 'complete');
       }, 300);
     }
 
-    // Stage progression timing (slower, ~4 seconds per stage)
     function startStageProgression() {
       showStage(0);
       currentStage = 1;
@@ -311,10 +352,9 @@ export const WIDGET_HTML = `<!DOCTYPE html>
           return;
         }
         progressStage();
-      }, 4000); // 4 seconds per stage
+      }, 4000);
     }
 
-    // Initialize
     initParticles();
     setTimeout(() => {
       startStageProgression();

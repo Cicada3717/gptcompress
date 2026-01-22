@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPTCompress Widget - Blended Branding</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: #1a1a1a;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .preview-container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 24px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 40px;
+        }
+
+        .widget {
+            background: #000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            height: 200px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Particle Background */
+        .particle-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #10b981;
+            border-radius: 50%;
+            opacity: 0.3;
+            filter: blur(0.5px);
+            animation: swirl 5s ease-in-out infinite;
+        }
+
+        @keyframes swirl {
+            0% {
+                transform: translate(var(--start-x), var(--start-y)) rotate(0deg);
+                opacity: 0.15;
+            }
+
+            50% {
+                transform: translate(var(--mid-x), var(--mid-y)) rotate(180deg);
+                opacity: 0.5;
+                box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+            }
+
+            100% {
+                transform: translate(var(--end-x), var(--end-y)) rotate(360deg);
+                opacity: 0.15;
+            }
+        }
+
+        /* Blended Branding - Subtle Integration */
+        .brand-watermark {
+            position: absolute;
+            top: 16px;
+            left: 20px;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0.4;
+            transition: opacity 0.3s ease;
+        }
+
+        .brand-watermark:hover {
+            opacity: 0.7;
+        }
+
+        .brand-logo-img {
+            width: 24px;
+            height: 24px;
+            opacity: 0.6;
+            filter: brightness(1.2) contrast(1.1);
+            mix-blend-mode: screen;
+        }
+
+        .brand-name-text {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            color: rgba(255, 255, 255, 0.5);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Centered Stage Container */
+        .stage-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 380px;
+        }
+
+        .stage-card {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px 24px;
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.92);
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .stage-card.visible {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            border-color: rgba(16, 185, 129, 0.35);
+            background: rgba(16, 185, 129, 0.08);
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.18);
+        }
+
+        .stage-card.exit {
+            opacity: 0;
+            transform: translate(-50%, -60%) scale(0.92);
+            transition: all 0.4s cubic-bezier(0.4, 0, 1, 1);
+        }
+
+        .stage-icon {
+            font-size: 26px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(16, 185, 129, 0.12);
+            border-radius: 10px;
+            flex-shrink: 0;
+        }
+
+        .stage-text {
+            flex: 1;
+            font-size: 15px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .stage-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2.5px solid rgba(255, 255, 255, 0.12);
+            border-top-color: #34d399;
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Subtle Bottom Branding */
+        .brand-footer {
+            position: absolute;
+            bottom: 12px;
+            right: 20px;
+            z-index: 2;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.25);
+            letter-spacing: 0.08em;
+            font-weight: 500;
+        }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        button {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: rgba(16, 185, 129, 0.25);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="preview-container">
+        <h1 class="title">GPTCompress Widget - Blended Branding</h1>
+        <p class="subtitle">Logo watermark blends naturally with the design</p>
+
+        <div class="widget">
+            <!-- Particles -->
+            <div class="particle-layer" id="particleLayer"></div>
+
+            <!-- Subtle Watermark Branding -->
+            <div class="brand-watermark">
+                <img src="data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='4' y='6' width='16' height='12' rx='2' stroke='%2310b981' stroke-width='2'/%3E%3Cpath d='M8 10h8M8 14h5' stroke='%2310b981' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"
+                    alt="Logo" class="brand-logo-img">
+                <span class="brand-name-text">GPTCompress</span>
+            </div>
+
+            <!-- Centered Stages -->
+            <div class="stage-container">
+                <div class="stage-card" id="stage0">
+                    <div class="stage-icon">📖</div>
+                    <div class="stage-text">Reading conversation</div>
+                    <div class="stage-spinner"></div>
+                </div>
+                <div class="stage-card" id="stage1">
+                    <div class="stage-icon">🧠</div>
+                    <div class="stage-text">Analyzing context</div>
+                    <div class="stage-spinner"></div>
+                </div>
+                <div class="stage-card" id="stage2">
+                    <div class="stage-icon">🔍</div>
+                    <div class="stage-text">Extracting patterns</div>
+                    <div class="stage-spinner"></div>
+                </div>
+                <div class="stage-card" id="stage3">
+                    <div class="stage-icon">📦</div>
+                    <div class="stage-text">Compressing output</div>
+                    <div class="stage-spinner"></div>
+                </div>
+            </div>
+
+            <!-- Bottom Right Subtle Tag -->
+            <div class="brand-footer">GPTCOMPRESS</div>
+        </div>
+
+        <div class="controls">
+            <button onclick="restartAnimation()">▶ Restart Animation</button>
+        </div>
+    </div>
+
+    <script>
+        const particleLayer = document.getElementById('particleLayer');
+        const stages = [
+            document.getElementById('stage0'),
+            document.getElementById('stage1'),
+            document.getElementById('stage2'),
+            document.getElementById('stage3')
+        ];
+
+        let currentStage = 0;
+
+        function initParticles() {
+            particleLayer.innerHTML = '';
+            const count = 30;
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+
+                const startX = Math.random() * 700 - 350;
+                const startY = Math.random() * 180 - 90;
+                const midX = Math.random() * 500 - 250;
+                const midY = Math.random() * 120 - 60;
+                const endX = Math.random() * 300 - 150;
+                const endY = Math.random() * 80 - 40;
+
+                particle.style.setProperty('--start-x', startX + 'px');
+                particle.style.setProperty('--start-y', startY + 'px');
+                particle.style.setProperty('--mid-x', midX + 'px');
+                particle.style.setProperty('--mid-y', midY + 'px');
+                particle.style.setProperty('--end-x', endX + 'px');
+                particle.style.setProperty('--end-y', endY + 'px');
+
+                particle.style.animationDelay = (Math.random() * 3) + 's';
+                particle.style.left = '50%';
+                particle.style.top = '50%';
+
+                particleLayer.appendChild(particle);
+            }
+        }
+
+        function showStage(index) {
+            if (index >= 0 && index < stages.length) {
+                stages[index].classList.add('visible');
+            }
+        }
+
+        function hideStage(index) {
+            if (index >= 0 && index < stages.length) {
+                stages[index].classList.remove('visible');
+                stages[index].classList.add('exit');
+            }
+        }
+
+        function progressStage() {
+            if (currentStage > 0) {
+                hideStage(currentStage - 1);
+            }
+
+            if (currentStage < stages.length) {
+                setTimeout(() => {
+                    showStage(currentStage);
+                    currentStage++;
+                }, currentStage === 0 ? 0 : 300);
+            }
+        }
+
+        function startAnimation() {
+            stages.forEach(s => s.classList.remove('visible', 'exit'));
+            currentStage = 0;
+            showStage(0);
+            currentStage = 1;
+
+            const interval = setInterval(() => {
+                if (currentStage >= stages.length) {
+                    clearInterval(interval);
+                    return;
+                }
+                progressStage();
+            }, 3000);
+        }
+
+        function restartAnimation() {
+            initParticles();
+            startAnimation();
+        }
+
+        window.addEventListener('load', () => {
+            restartAnimation();
+        });
+    </script>
+</body>
+
+</html>
